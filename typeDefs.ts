@@ -113,12 +113,32 @@ export interface unknownShape {
 
 export interface CompletedOrder {
     _id: ObjectId,
-    total: number,
-    orderPlaced: Date,
     items: OrderItemPopulated[]
 }
 
 export type OrderItemsCategoryCounter = {
-    cat: string,
+    category: string,
     count: number
+}
+
+export enum Color {
+    BLACK = 'BLACK',
+    RED = 'RED',
+    GRAY = 'GRAY',
+    WHITE = 'WHITE',
+    AMBER = 'AMBER'
+}
+export enum Size {
+    S = 'S',
+    M = 'M',
+    L = 'L',
+    XL = 'XL'
+}
+export type OrderedProduct = {
+    productId: string,
+    color: Color,
+    quantity: number,
+    size: Size,
+    price: number,
+    imgUrl: string
 }

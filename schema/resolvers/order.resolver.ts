@@ -1,8 +1,9 @@
 import UserSchem from "../../dataLayer/schema/User"
 import Order from "../../dataLayer/schema/Order"
-import { ErrorCode, User, UserRole } from "../../typeDefs"
+import { ErrorCode, OrderedProduct, User, UserRole } from "../../typeDefs"
 import verifyUser from "../../utilities/verifyUser"
 import { GraphQLError } from "graphql"
+import Product from "../../dataLayer/schema/Product"
 
 
 const orderResolver = {
@@ -104,20 +105,22 @@ const orderResolver = {
     },
     Mutation: {
         createOrder: async (parent: any, args: any, context: any) => {
-            if (!context.token) {
-                throw new Error(ErrorCode.NOT_AUTHENTICATED)
-            }
 
-            const user = verifyUser(context.token)
-            if (!user) {
-                throw new Error(ErrorCode.NOT_AUTHENTICATED)
-            }
-
-            if (user.role !== UserRole.CUSTOMER) {
-                throw new Error(ErrorCode.NOT_AUTHENTICATED)
-            }
 
             try {
+                if (!context.token) {
+                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                }
+
+                const user = verifyUser(context.token)
+                if (!user) {
+                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                }
+
+                if (user.role !== UserRole.CUSTOMER) {
+                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                }
+
                 const {
                     userId,
                     status,
@@ -127,6 +130,27 @@ const orderResolver = {
                     items,
                     shippingAddress,
                 } = args.input
+
+                items.map(async (item: OrderedProduct) => {
+                    const { productId, quantity } = item
+                    const product = await Product.findById(productId).select('quantity -_id').lean()
+                    console.log(product)
+
+                    if (product) {
+                        if (quantity > product.quantity) {
+                            throw new Error('Ordered quantity exceeds stock quantity')
+                        }
+                        await Product.updateOne(
+                            {
+                                _id: productId,
+                            },
+                            {
+                                $set: {
+                                    quantity: product.quantity - quantity
+                                }
+                            })
+                    }
+                })
 
                 const newOrder = new Order({
                     orderNumber: Date.now() + Math.floor((Math.random() * 1000)),

@@ -1,13 +1,29 @@
 import gql from "graphql-tag"
 
+/* 
+type CompletedOrder {
+    _id: ID!
+    total: Float!,
+    orderPlaced: Date!,
+    items: [CompletedOrderProductId!]!
+}
+
+type CompletedOrderProductId {
+    productId: CompletedOrderProduct!
+}
+type CompletedOrderProduct {
+    _id: ID!
+    category: String!
+}
+    type YearlyStats {
+        totalOrders: Int!,
+        totalSales: Float,
+        totalUsers: Int!,
+    }
+
+*/
 
 const analyticsTypeDef = gql`
-
-enum ChangeDirection {
-    INCREASE,
-    DECREASE,
-    NO_CHANGE
-}
 
     type LowStockProduct {
         id: ID!,
@@ -15,32 +31,11 @@ enum ChangeDirection {
         sku: String!,
         quantity: Int!,
     }
-    type CompletedOrder {
-        _id:ID!
-        total: Float!,
-        orderPlaced: Date!,
-        items: [CompletedOrderProductId!]!
-    }
-
-    type CompletedOrderProductId {
-        productId: CompletedOrderProduct!
-    }
-type CompletedOrderProduct {
-        _id:ID!
-        category: String!
-    }
-    type YearlyStats {
-        totalOrders: Int!,
-        totalSales: Float,
-        totalUsers: Int!,
-    }
-    type PercentageChange {
-        changeBy: Int,
-        changeDirection: ChangeDirection
-    }
+    
+    
 
     type OrderItemsCategoryCounter {
-        cat: String!,
+        category: String!,
         count: Int!
     }
     
@@ -60,9 +55,8 @@ type CompletedOrderProduct {
     }
 
     type Sale {
-        orderPlaced: Date!,
-        total: Float!
-
+        date: Date!,
+        sales: Float!
     }
 
     type LowProduct {
@@ -74,13 +68,13 @@ type CompletedOrderProduct {
     }
 
     type Query {
-        yearlyStats: YearlyStats
         orderAnalytics: OrderAnalytics
         salesAnalytics: SalesAnalytics
         userAnalytics: UserAnalytics
         totalLowStockProducts: [LowStockProduct],
         salesOverTime: [Sale],
-        lowStockProducts: [LowProduct]
+        lowStockProducts: [LowProduct],
+        ordersByCategory: [OrderItemsCategoryCounter]
     }
 
 `

@@ -11,20 +11,9 @@ import deleteImages from '../../utilities/deleteImages';
 const productResolver = {
   Query: {
     products: async (parent: any, args: any, context: any) => {
-      // if (!context.token) {
-      //   throw new Error('Not Authenticated')
-      // }
-
-      // const admin = verifyUser(context.token)
-
-      // if (!admin) {
-      //   throw new Error('Not Authenticated')
-      // }
+      
       const products = await Product.find()
-
       return products
-
-      // return products.map(({__typename, ...rest})=>rest)
     },
     product: async (parent: any, args: any, context: any) => {
 
@@ -94,8 +83,6 @@ const productResolver = {
         }
 
         let toUpdateImgs = [...oldImgs]
-
-
 
         // loop thorugh old images and filter out if its its exists in new images or not
         if (productExists.imgs.length > oldImgs.length) {
