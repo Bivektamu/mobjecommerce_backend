@@ -42,3 +42,49 @@ The backend is built with **TypeScript**, **Apollo Server**, and **Express**, le
 | **Cloud Storage** | AWS S3 |
 | **Hosting** | Vercel |
 | **Others** | bcrypt, dotenv, cors, helmet, compression |
+
+---
+
+## 🌐 Deployment
+
+- **Backend**: Hosted on **Vercel**  
+- **Database**: MongoDB Atlas  
+- **Storage**: AWS S3 (for product and user images)
+
+---
+
+## 🧾 Example Entities
+
+- **User** — registration, authentication, profile management  
+- **Product** — title, SKU, price, category, images, stock tracking  
+- **Order** — user details, items, total price, payment & order status  
+- **Review** — linked with user and product via population  
+- **Category** — product classification for frontend filtering and analytics  
+
+---
+
+## 🎯 Highlights
+
+- Implemented secure authentication and authorization system using JWT.  
+- Designed efficient data aggregation pipelines for reporting (sales by month, category).  
+- Integrated AWS S3 for image storage and retrieval.  
+- Applied strong typing across backend logic with TypeScript.  
+- Built modular and clean GraphQL schema for maintainable API development.  
+- Optimized MongoDB queries using indexes and projections.  
+- Deployed and maintained serverless GraphQL API on Vercel.
+
+---
+
+## 🧑‍💻 Author
+
+**Bivek Jang Gurung**  
+Front-End Developer | React Specialist  
+📍 Sydney, Australia  
+🌐 [bivekgurung.com](https://bivekgurung.com)  
+💼 [LinkedIn](https://www.linkedin.com/in/bivek-gurung-b4602a62/)
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — feel free to explore and learn from it.
