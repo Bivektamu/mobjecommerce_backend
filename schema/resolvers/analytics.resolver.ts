@@ -3,7 +3,7 @@ import User from "../../dataLayer/schema/User"
 import { CompletedOrder, ErrorCode, OrderItemPopulated, OrderItemsCategoryCounter, OrderStatus, unknownShape, UserRole } from "../../typeDefs"
 import verifyUser from "../../utilities/verifyUser"
 
-import { currentMonthStartDate, currentMonthEndDate, previousMonthStartDate, previousMonthEndDate, startFiscalDate } from '../../utilities/getDates'
+import { startFiscalDate, currentStartDate, currentEndDate, pastStartDate, pastEndDate } from '../../utilities/getDates'
 import Product from "../../dataLayer/schema/Product"
 
 const analyticsResolver = {
@@ -26,16 +26,17 @@ const analyticsResolver = {
 
                 const currentMonthOrders = await Order.find({
                     orderPlaced: {
-                        $gte: currentMonthStartDate,
-                        $lte: currentMonthEndDate
+                        $gte: currentStartDate,
+                        $lte: currentEndDate
                     },
                     status: OrderStatus.COMPLETED
                 }).select('total')
 
+
                 const lastMonthOrders = await Order.find({
                     orderPlaced: {
-                        $gte: previousMonthStartDate,
-                        $lte: previousMonthEndDate
+                        $gte: pastStartDate,
+                        $lte: pastEndDate
                     },
                     status: OrderStatus.COMPLETED
                 }).select('total')
@@ -52,12 +53,12 @@ const analyticsResolver = {
                         changeInSales = parseFloat(changeInSales.toFixed(2))
                     }
                 }
-                else if (totalLastMonthSales) {
+                else if (totalCurrentMonthSales > 0) {
                     changeInOrders = 100, changeInSales = 100
                 }
 
                 return {
-                    sales: totalLastMonthSales,
+                    sales: parseFloat(totalCurrentMonthSales.toFixed(2)),
                     changeInSales,
                 }
 
@@ -85,16 +86,16 @@ const analyticsResolver = {
 
                 const currentMonthOrders = (await Order.find({
                     orderPlaced: {
-                        $gte: currentMonthStartDate,
-                        $lte: currentMonthEndDate
+                        $gte: currentStartDate,
+                        $lte: currentEndDate
                     },
                     status: OrderStatus.COMPLETED
                 }).select('_id').lean()).length
 
                 const previousMonthOrders = (await Order.find({
                     orderPlaced: {
-                        $gte: previousMonthStartDate,
-                        $lte: previousMonthEndDate
+                        $gte: pastStartDate,
+                        $lte: pastEndDate
                     },
                     status: OrderStatus.COMPLETED
                 }).select('_id').lean()).length
@@ -142,8 +143,8 @@ const analyticsResolver = {
 
                 const currentMonthActiveUsers = (await Order.find({
                     orderPlaced: {
-                        $gte: currentMonthStartDate,
-                        $lte: currentMonthEndDate
+                        $gte: currentStartDate,
+                        $lte: currentEndDate
                     },
                     status: OrderStatus.COMPLETED
                 }).select('userId -_id').lean())
@@ -153,8 +154,8 @@ const analyticsResolver = {
 
                 const previousMonthActiveUsers = (await Order.find({
                     orderPlaced: {
-                        $gte: previousMonthStartDate,
-                        $lte: previousMonthEndDate
+                        $gte: pastStartDate,
+                        $lte: pastEndDate
                     },
                     status: OrderStatus.COMPLETED
                 }).select('userId -_id').lean())
@@ -206,14 +207,14 @@ const analyticsResolver = {
 
                 const monthlySales = await Order.find({
                     orderPlaced: {
-                        $gte: currentMonthStartDate,
-                        $lte: currentMonthEndDate
+                        $gte: currentStartDate,
+                        $lte: currentEndDate
                     },
                     status: OrderStatus.COMPLETED
                 })
-                .select('total orderPlaced -_id')
-                .sort({orderPlaced: 1})
-                .lean()
+                    .select('total orderPlaced -_id')
+                    .sort({ orderPlaced: 1 })
+                    .lean()
 
 
                 if (monthlySales.length > 0) {
@@ -226,13 +227,13 @@ const analyticsResolver = {
                         return acc
                     }, {})
 
-                    const salesByDate = Object.entries(groupedBySales).map(([date, sales])=>
-                        ({date:new Date(date), sales}))
+                    const salesByDate = Object.entries(groupedBySales).map(([date, sales]) =>
+                        ({ date: new Date(date), sales }))
 
 
                     return salesByDate
 
-                    
+
 
                 }
                 return []
@@ -298,8 +299,8 @@ const analyticsResolver = {
                 }
                 const monthlyOrders = await Order.find({
                     orderPlaced: {
-                        $gte: currentMonthStartDate,
-                        $lte: currentMonthEndDate
+                        $gte: currentStartDate,
+                        $lte: currentEndDate
                     },
                     status: OrderStatus.COMPLETED
                 }).select('items.productId').populate({
