@@ -41,9 +41,13 @@ const analyticsResolver = {
                     status: OrderStatus.COMPLETED
                 }).select('total')
 
+                
+
                 const totalCurrentMonthSales = currentMonthOrders.reduce((sum, order) => sum + order.total, 0)
 
                 const totalLastMonthSales = lastMonthOrders.reduce((sum, order) => sum + order.total, 0)
+
+                
 
                 let changeInOrders = 0, changeInSales = 0
 

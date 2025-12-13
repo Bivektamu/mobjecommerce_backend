@@ -11,7 +11,6 @@ const orderResolver = {
         orders: async (parent: any, args: any, context: any) => {
 
             try {
-                // await new Promise((resolve) => setTimeout(resolve, 5000));
                 if (!context.token) {
                     throw new Error(ErrorCode.NOT_AUTHENTICATED)
                 }
@@ -28,9 +27,13 @@ const orderResolver = {
 
                 }
 
-                const orders = await Order.find().sort({
+                const limit = args.limit
+
+                const orders = await Order.find()
+                .sort({
                     orderPlaced: -1
                 })
+                .limit(limit)
                 return orders
 
             } catch (error) {

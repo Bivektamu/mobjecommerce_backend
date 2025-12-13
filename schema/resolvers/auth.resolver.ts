@@ -18,7 +18,7 @@ const authResolver = {
         }
 
         const signOptions: SignOptions = {
-          expiresIn: '1h'
+          expiresIn: '4h'
         }
         const secret: string = process.env.JWTSECRET as string
 
@@ -75,7 +75,7 @@ const authResolver = {
         }
 
         const signOptions: SignOptions = {
-          expiresIn: '1h'
+          expiresIn: '4h'
         }
         const secret: string = process.env.JWTSECRET as string
 
