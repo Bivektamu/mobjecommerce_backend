@@ -4,7 +4,7 @@ import { CustomJwtPayload, ErrorCode, FormError, UserRole, ValidateSchema } from
 import validateForm from '../../utilities/validateForm';
 import User from '../../dataLayer/schema/User';
 import bcrypt from 'bcrypt'
-import { GraphQLError } from 'graphql';
+import { OAuth2Client } from 'google-auth-library'
 const authResolver = {
   Mutation: {
     logInAdmin: async (parent: any, args: any, context: any) => {
@@ -71,7 +71,7 @@ const authResolver = {
           throw new Error(ErrorCode.WRONG_USER_TYPE)
         }
 
-        const isMatched = await bcrypt.compare(password, user.password)
+        const isMatched = await bcrypt.compare(password, user.password as string)
 
         if (!isMatched) {
           throw new Error(ErrorCode.BAD_CREDENTIALS)
@@ -93,6 +93,61 @@ const authResolver = {
           secret,
           signOptions
         );
+
+        return {
+          token
+        }
+
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
+        }
+      }
+    },
+    logInGoogleUser: async (parent: any, args: any, context: any) => {
+      try {
+        const { credential } = args
+        if (!credential) throw new Error(ErrorCode.NOT_AUTHENTICATED)
+        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+        const ticket = await client.verifyIdToken({
+          idToken: credential,
+          audience: process.env.GOOGLE_CLIENT_ID as string
+        })
+
+        const payload = ticket.getPayload()
+        if (!payload) throw new Error(ErrorCode.NOT_FOUND)
+        const { email, given_name, family_name, sub } = payload
+        const userExsits = await User.findOne({ email })
+
+        const jwtPayload: CustomJwtPayload = {
+          role: UserRole.CUSTOMER,
+          id: userExsits?.id
+        }
+
+        if (!userExsits) {
+          const user = new User({
+            firstName: given_name,
+            lastName: family_name,
+            email,
+            role: UserRole.CUSTOMER,
+            googleId: sub
+          })
+
+          await user.save()
+          jwtPayload.id = user.id
+        }
+
+        const signOptions: SignOptions = {
+          expiresIn: '4h'
+        }
+
+        const secret: string = process.env.JWTSECRET as string
+
+        const token = sign(
+          jwtPayload,
+          secret,
+          signOptions
+        )
 
         return {
           token
@@ -140,7 +195,7 @@ const authResolver = {
           throw new Error(ErrorCode.USER_NOT_FOUND)
         }
 
-        const isMatched = await bcrypt.compare(currentPassword, user.password)
+        const isMatched = await bcrypt.compare(currentPassword, user.password as string)
 
         if (!isMatched) {
           throw new Error(ErrorCode.INPUT_ERROR)
@@ -174,7 +229,6 @@ const authResolver = {
         const user = verifyUser(context.token)
         if (!user) {
           throw new Error(ErrorCode.JWT_ERROR)
-
         }
         return { isLoggedIn: true, user: user }
       }

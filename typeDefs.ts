@@ -22,6 +22,7 @@ export type User = {
     email: String,
     password: String,
     role: UserRole
+    googleId?:String
 }
 
 export interface CustomJwtPayload extends JwtPayload {

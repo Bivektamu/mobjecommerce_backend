@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { User } from "../../typeDefs";
 
 const UserSchema = new Schema({
     firstName: {
@@ -12,11 +13,17 @@ const UserSchema = new Schema({
     email: {
         type: String,
         required: true,
+        unique:true,
     },
 
     password: {
         type: String,
-        required: true,
+        required: function(this:User) {return !this.googleId},
+    },
+    googleId: {
+        type: String,
+        required: false,
+        unique: true
     },
     role: {
         type: String,
