@@ -5,6 +5,7 @@ import validateForm from '../../utilities/validateForm';
 import User from '../../dataLayer/schema/User';
 import bcrypt from 'bcrypt'
 import { OAuth2Client } from 'google-auth-library'
+import { GraphQLError } from 'graphql';
 const authResolver = {
   Mutation: {
     logInAdmin: async (parent: any, args: any, context: any) => {
@@ -48,61 +49,71 @@ const authResolver = {
     },
     logInUser: async (parent: any, args: any, context: any) => {
 
-      try {
-        const { email, password } = args.input
+      const { email, password } = args.input
 
-        const validateSchema: ValidateSchema<any>[] = [
-          { value: email, name: 'email', type: 'email' },
-          { value: password, name: 'password', type: 'string' },
-        ]
-        const errors: FormError = validateForm(validateSchema)
-        if (Object.keys(errors).length > 0) {
-          throw new Error(ErrorCode.VALIDATION_ERROR)
-        }
-
-        const user = await User.findOne({ email: email.toLowerCase() })
-
-
-        if (!user) {
-          throw new Error(ErrorCode.USER_NOT_FOUND)
-        }
-
-        if (user.role !== UserRole.CUSTOMER) {
-          throw new Error(ErrorCode.WRONG_USER_TYPE)
-        }
-
-        const isMatched = await bcrypt.compare(password, user.password as string)
-
-        if (!isMatched) {
-          throw new Error(ErrorCode.BAD_CREDENTIALS)
-
-        }
-
-        const payload: CustomJwtPayload = {
-          role: UserRole.CUSTOMER,
-          id: user.id
-        }
-
-        const signOptions: SignOptions = {
-          expiresIn: '4h'
-        }
-        const secret: string = process.env.JWTSECRET as string
-
-        const token = sign(
-          payload,
-          secret,
-          signOptions
-        );
-
-        return {
-          token
-        }
-
-      } catch (error) {
-        if (error instanceof Error) {
-          throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
-        }
+      const validateSchema: ValidateSchema<any>[] = [
+        { value: email, name: 'email', type: 'email' },
+        { value: password, name: 'password', type: 'string' },
+      ]
+      const errors: FormError = validateForm(validateSchema)
+      if (Object.keys(errors).length > 0) {
+        throw new GraphQLError('Login fields error', {
+          extensions: {
+            code: ErrorCode.VALIDATION_ERROR,
+            extra: errors
+          }
+        })
       }
+
+      const user = await User.findOne({ email: email.toLowerCase() })
+
+      if (!user) {
+        throw new GraphQLError('User not found', {
+          extensions: {
+            code: ErrorCode.USER_NOT_FOUND,
+          }
+        })
+      }
+
+      if (user.role !== UserRole.CUSTOMER) {
+        throw new GraphQLError('Wrong User type', {
+          extensions: {
+            code: ErrorCode.WRONG_USER_TYPE,
+          }
+        })
+      }
+
+      const isMatched = await bcrypt.compare(password, user.password as string)
+
+      if (!isMatched) {
+        throw new GraphQLError('Email or password wrong', {
+          extensions: {
+            code: ErrorCode.BAD_CREDENTIALS,
+          }
+        })
+      }
+
+      const payload: CustomJwtPayload = {
+        role: UserRole.CUSTOMER,
+        id: user.id
+      }
+
+      const signOptions: SignOptions = {
+        expiresIn: '1h'
+      }
+      const secret: string = process.env.JWTSECRET as string
+
+      const token = sign(
+        payload,
+        secret,
+        signOptions
+      );
+
+      return {
+        token
+      }
+
+
     },
     logInGoogleUser: async (parent: any, args: any, context: any) => {
       try {
