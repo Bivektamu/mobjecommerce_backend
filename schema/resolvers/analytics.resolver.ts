@@ -5,23 +5,36 @@ import verifyUser from "../../utilities/verifyUser"
 
 import { startFiscalDate, currentStartDate, currentEndDate, pastStartDate, pastEndDate } from '../../utilities/getDates'
 import Product from "../../dataLayer/schema/Product"
+import { GraphQLError } from "graphql"
 
 const analyticsResolver = {
     Query: {
 
         salesAnalytics: async (parent: any, args: any, context: any) => {
-            try {
+            
                 if (!context.token) {
-                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
+                    throw new GraphQLError('Not Authenticated', {
+                        extensions: {
+                            code: ErrorCode.JWT_TOKEN_MISSING
+                        }
+                    })
                 }
                 const user = verifyUser(context.token)
 
                 if (!user) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new GraphQLError('User not verified', {
+                        extensions: {
+                            code: ErrorCode.NOT_AUTHENTICATED
+                        }
+                    })
                 }
 
-                if (!user || user?.role !== UserRole.ADMIN) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                if (user.role !== UserRole.ADMIN) {
+                    throw new GraphQLError('User not authorized', {
+                        extensions: {
+                            code: ErrorCode.WRONG_USER_TYPE
+                        }
+                    })
                 }
 
                 const currentMonthOrders = await Order.find({
@@ -41,13 +54,13 @@ const analyticsResolver = {
                     status: OrderStatus.COMPLETED
                 }).select('total')
 
-                
+
 
                 const totalCurrentMonthSales = currentMonthOrders.reduce((sum, order) => sum + order.total, 0)
 
                 const totalLastMonthSales = lastMonthOrders.reduce((sum, order) => sum + order.total, 0)
 
-                
+
 
                 let changeInOrders = 0, changeInSales = 0
 
@@ -66,26 +79,34 @@ const analyticsResolver = {
                     changeInSales,
                 }
 
-            } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
-                }
-            }
+            
 
         },
         orderAnalytics: async (parent: any, args: any, context: any) => {
-            try {
+            
                 if (!context.token) {
-                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
+                    throw new GraphQLError('Not Authenticated', {
+                        extensions: {
+                            code: ErrorCode.JWT_TOKEN_MISSING
+                        }
+                    })
                 }
                 const user = verifyUser(context.token)
 
                 if (!user) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new GraphQLError('User not verified', {
+                        extensions: {
+                            code: ErrorCode.NOT_AUTHENTICATED
+                        }
+                    })
                 }
 
-                if (!user || user?.role !== UserRole.ADMIN) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                if (user.role !== UserRole.ADMIN) {
+                    throw new GraphQLError('User not authorized', {
+                        extensions: {
+                            code: ErrorCode.WRONG_USER_TYPE
+                        }
+                    })
                 }
 
                 const currentMonthOrders = (await Order.find({
@@ -122,27 +143,35 @@ const analyticsResolver = {
                     changeInOrders
                 }
 
-            } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
-                }
-            }
+            
 
         },
 
         userAnalytics: async (parent: any, args: any, context: any) => {
-            try {
+            
                 if (!context.token) {
-                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
+                    throw new GraphQLError('Not Authenticated', {
+                        extensions: {
+                            code: ErrorCode.JWT_TOKEN_MISSING
+                        }
+                    })
                 }
                 const user = verifyUser(context.token)
 
                 if (!user) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new GraphQLError('User not verified', {
+                        extensions: {
+                            code: ErrorCode.NOT_AUTHENTICATED
+                        }
+                    })
                 }
 
-                if (!user || user?.role !== UserRole.ADMIN) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                if (user.role !== UserRole.ADMIN) {
+                    throw new GraphQLError('User not authorized', {
+                        extensions: {
+                            code: ErrorCode.WRONG_USER_TYPE
+                        }
+                    })
                 }
 
                 const currentMonthActiveUsers = (await Order.find({
@@ -186,27 +215,35 @@ const analyticsResolver = {
                     changeInUsers
                 }
 
-            } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
-                }
-            }
+            
 
         },
 
         salesOverTime: async (parent: any, args: any, context: any) => {
-            try {
+            
                 if (!context.token) {
-                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
+                    throw new GraphQLError('Not Authenticated', {
+                        extensions: {
+                            code: ErrorCode.JWT_TOKEN_MISSING
+                        }
+                    })
                 }
                 const user = verifyUser(context.token)
 
                 if (!user) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new GraphQLError('User not verified', {
+                        extensions: {
+                            code: ErrorCode.NOT_AUTHENTICATED
+                        }
+                    })
                 }
 
-                if (!user || user?.role !== UserRole.ADMIN) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                if (user.role !== UserRole.ADMIN) {
+                    throw new GraphQLError('User not authorized', {
+                        extensions: {
+                            code: ErrorCode.WRONG_USER_TYPE
+                        }
+                    })
                 }
 
                 const monthlySales = await Order.find({
@@ -236,33 +273,35 @@ const analyticsResolver = {
 
 
                     return salesByDate
-
-
-
                 }
                 return []
-
-            } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
-                }
-            }
-
         },
 
         lowStockProducts: async (parent: any, args: any, context: any) => {
-            try {
+            
                 if (!context.token) {
-                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
+                    throw new GraphQLError('Not Authenticated', {
+                        extensions: {
+                            code: ErrorCode.JWT_TOKEN_MISSING
+                        }
+                    })
                 }
                 const user = verifyUser(context.token)
 
                 if (!user) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new GraphQLError('User not verified', {
+                        extensions: {
+                            code: ErrorCode.NOT_AUTHENTICATED
+                        }
+                    })
                 }
 
-                if (!user || user?.role !== UserRole.ADMIN) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                if (user.role !== UserRole.ADMIN) {
+                    throw new GraphQLError('User not authorized', {
+                        extensions: {
+                            code: ErrorCode.WRONG_USER_TYPE
+                        }
+                    })
                 }
 
                 const lowWtockProducts = await Product.find({
@@ -280,26 +319,34 @@ const analyticsResolver = {
                 }
 
                 return []
-            } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
-                }
-            }
+            
 
         },
         ordersByCategory: async (parent: any, args: any, context: any) => {
-            try {
+            
                 if (!context.token) {
-                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
+                    throw new GraphQLError('Not Authenticated', {
+                        extensions: {
+                            code: ErrorCode.JWT_TOKEN_MISSING
+                        }
+                    })
                 }
                 const user = verifyUser(context.token)
 
                 if (!user) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new GraphQLError('User not verified', {
+                        extensions: {
+                            code: ErrorCode.NOT_AUTHENTICATED
+                        }
+                    })
                 }
 
-                if (!user || user?.role !== UserRole.ADMIN) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                if (user.role !== UserRole.ADMIN) {
+                    throw new GraphQLError('User not authorized', {
+                        extensions: {
+                            code: ErrorCode.WRONG_USER_TYPE
+                        }
+                    })
                 }
                 const monthlyOrders = await Order.find({
                     orderPlaced: {
@@ -332,11 +379,7 @@ const analyticsResolver = {
                 }
                 return orderByCategory
 
-            } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
-                }
-            }
+            
 
         }
     }

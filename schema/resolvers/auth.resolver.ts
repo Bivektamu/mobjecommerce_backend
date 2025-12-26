@@ -172,7 +172,7 @@ const authResolver = {
       if (!context.token) {
         throw new GraphQLError('Not Authenticated', {
           extensions: {
-            code: ErrorCode.NOT_AUTHENTICATED
+            code: ErrorCode.JWT_TOKEN_MISSING
           }
         })
       }
@@ -243,7 +243,7 @@ const authResolver = {
       if (!context.token) {
         throw new GraphQLError('Not Authenticated', {
           extensions: {
-            code: ErrorCode.NOT_AUTHENTICATED
+            code: ErrorCode.JWT_TOKEN_MISSING
           }
         })
       }

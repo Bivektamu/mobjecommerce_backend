@@ -1,119 +1,101 @@
+import { GraphQLError } from "graphql"
 import WishList from "../../dataLayer/schema/WishList"
 import { ErrorCode, UserRole } from "../../typeDefs"
 import verifyUser from "../../utilities/verifyUser"
 
 const wishListResolver = {
-    Query: {
-        wishListByUserId: async (parent: any, args: any, context: any) => {
-            if (!context.token) {
-                throw new Error(ErrorCode.NOT_AUTHENTICATED)
-            }
-            const user = verifyUser(context.token)
-            if (!user) {
-                throw new Error(ErrorCode.NOT_AUTHENTICATED)
-            }
-            if (user.role !== UserRole.CUSTOMER) {
-                throw new Error(ErrorCode.NOT_AUTHENTICATED)
-            }
+  Query: {
+    wishListByUserId: async (parent: any, args: any, context: any) => {
+      if (!context.token) {
+        throw new GraphQLError('Not Authenticated', {
+          extensions: {
+            code: ErrorCode.JWT_TOKEN_MISSING
+          }
+        })
+      }
+      const user = verifyUser(context.token)
+      if (!user) {
+        throw new GraphQLError('User not verified', {
+          extensions: {
+            code: ErrorCode.NOT_AUTHENTICATED
+          }
+        })
+      }
+      if (user.role !== UserRole.CUSTOMER) {
+        throw new GraphQLError('User not authorized', {
+          extensions: {
+            code: ErrorCode.WRONG_USER_TYPE
+          }
+        })
+      }
 
+      const userId = args.userId
 
-            const userId = args.userId
+      if (!userId) {
+        throw new GraphQLError('User ID not provided', {
+          extensions: {
+            code: ErrorCode.INPUT_ERROR
+          }
+        })
+      }
 
-            if (!userId) {
-                throw new Error(ErrorCode.INPUT_ERROR)
-            }
+      const wishList = await WishList.findOne({ userId })
 
-            const wishList = await WishList.findOne({ userId })
+      if (!wishList) {
+        throw new GraphQLError('Wish list not found', {
+          extensions: {
+            code: ErrorCode.NOT_FOUND
+          }
+        })
+      }
 
-            if (!wishList) {
-                throw new Error(ErrorCode.NOT_FOUND)
-            }
-
-            return wishList
-        },
+      return wishList
     },
-    Mutation: {
-        addToWishList: async (parent: any, args: any, context: any) => {
-            if (!context.token) {
-                throw new Error(ErrorCode.NOT_AUTHENTICATED)
-            }
-            const user = verifyUser(context.token)
-            if (!user) {
-                throw new Error(ErrorCode.NOT_AUTHENTICATED)
-            }
-            if (user.role !== UserRole.CUSTOMER) {
-                throw new Error(ErrorCode.NOT_AUTHENTICATED)
-            }
+  },
+  Mutation: {
+    addToWishList: async (parent: any, args: any, context: any) => {
+      if (!context.token) {
+        throw new GraphQLError('Not Authenticated', {
+          extensions: {
+            code: ErrorCode.JWT_TOKEN_MISSING
+          }
+        })
+      }
+      const user = verifyUser(context.token)
+      if (!user) {
+        throw new GraphQLError('User not verified', {
+          extensions: {
+            code: ErrorCode.NOT_AUTHENTICATED
+          }
+        })
+      }
+      if (user.role !== UserRole.CUSTOMER) {
+        throw new GraphQLError('User not authorized', {
+          extensions: {
+            code: ErrorCode.WRONG_USER_TYPE
+          }
+        })
+      }
 
-            try {
+      const { userId, products } = args.input
 
-                const { userId, products } = args.input
-
-                // const wishListExists = await WishList.findOne({ userId })
-
-                // if (!wishListExists) {
-                //     const wishList = new WishList({
-                //         userId,
-                //         products: products
-                //     })
-
-                //     await wishList.save()
-
-                //     return wishList
-                // }
-
-                const updatedWishList = await WishList.findOneAndUpdate(
-                    { userId },
-                    {
-                        userId,
-                        products
-                    },
-                    {
-                        new: true,
-                        upsert: true,
-                        runValidators: true
-                    }
-                )
-
-
-                return updatedWishList
-
-
-            } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
-                }
-            }
-
-
+      const updatedWishList = await WishList.findOneAndUpdate(
+        { userId },
+        {
+          userId,
+          products
         },
-        // updateWishList: async (parent: any, args: any, context: any) => {
-        //     if (!context.token) {
-        //         throw new Error(ErrorCode.NOT_AUTHENTICATED)
-        //     }
-        //     const user = verifyUser(context.token)
-        //     if (!user) {
-        //         throw new Error(ErrorCode.NOT_AUTHENTICATED)
-        //     }
-        //     if (user.role !== UserRole.CUSTOMER) {
-        //         throw new Error(ErrorCode.NOT_AUTHENTICATED)
-        //     }
+        {
+          new: true,
+          upsert: true,
+          runValidators: true
+        }
+      )
 
-        //     try {
+      return updatedWishList
 
-        //         const { id, userId, products } = args.input
-
-
-
-        //     } catch (error) {
-        //         if (error instanceof Error) {
-        //             throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
-        //         }
-        //     }
-
-
-        // }
-    }
+    },
+  }
 }
 
 export default wishListResolver

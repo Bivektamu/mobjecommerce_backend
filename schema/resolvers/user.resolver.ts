@@ -9,44 +9,64 @@ const userRresolver = {
   Query: {
     users: async (parent: any, args: any, context: any) => {
       if (!context.token) {
-        throw new Error(ErrorCode.NOT_AUTHENTICATED)
+        throw new GraphQLError('Not Authenticated', {
+          extensions: {
+            code: ErrorCode.JWT_TOKEN_MISSING
+          }
+        })
       }
       const user = verifyUser(context.token)
-      if (user?.role !== UserRole.ADMIN) {
-        throw new Error(ErrorCode.NOT_AUTHENTICATED)
+
+      if (!user) {
+        throw new GraphQLError('User not verified', {
+          extensions: {
+            code: ErrorCode.NOT_AUTHENTICATED
+          }
+        })
+      }
+
+      if (user.role !== UserRole.ADMIN) {
+        throw new GraphQLError('User not authorized', {
+          extensions: {
+            code: ErrorCode.WRONG_USER_TYPE
+          }
+        })
       }
       const users = await User.find()
       return users
     },
     user: async (parent: any, args: any, context: any) => {
 
-      try {
-
-        if (!context.token) {
-          throw new Error(ErrorCode.NOT_AUTHENTICATED)
-        }
-        const user = verifyUser(context.token)
-
-        if (!user) {
-          throw new Error(ErrorCode.NOT_AUTHENTICATED)
-        }
-        const id = args.id
-
-        const findUser = await User.findById(id)
-        return findUser
-
-      } catch (error) {
-        if(error instanceof Error) {
-          throw new Error(error.message)
-        }
-
+      if (!context.token) {
+        throw new GraphQLError('Not Authenticated', {
+          extensions: {
+            code: ErrorCode.JWT_TOKEN_MISSING
+          }
+        })
       }
+      const user = verifyUser(context.token)
+
+      if (!user) {
+        throw new GraphQLError('User not verified', {
+          extensions: {
+            code: ErrorCode.NOT_AUTHENTICATED
+          }
+        })
+      }
+      const id = args.id
+
+      const findUser = await User.findById(id)
+      return findUser
     },
     userEmail: async (parent: any, args: any) => {
       const id = args.id
       const finduser = await User.findById(id)
       if (!finduser) {
-        throw new Error(ErrorCode.NOT_FOUND)
+        throw new GraphQLError('User not found', {
+          extensions: {
+            code: ErrorCode.USER_NOT_FOUND
+          }
+        })
       }
       return finduser.email
     },
@@ -54,7 +74,11 @@ const userRresolver = {
       const id = args.id
       const finduser = await User.findById(id)
       if (!finduser) {
-        throw new Error(ErrorCode.NOT_FOUND)
+        throw new GraphQLError('User not found', {
+          extensions: {
+            code: ErrorCode.USER_NOT_FOUND
+          }
+        })
       }
       const user = {
         firstName: finduser.firstName,
@@ -76,12 +100,21 @@ const userRresolver = {
       ]
       const errors: FormError = validateForm(validateSchema)
       if (Object.keys(errors).length > 0) {
-        throw new Error(JSON.stringify(errors))
+        throw new GraphQLError('Login fields error', {
+          extensions: {
+            code: ErrorCode.VALIDATION_ERROR,
+            extra: errors
+          }
+        })
       }
 
       const userExists = await User.findOne({ email: email.toLowerCase() })
       if (userExists) {
-        throw new Error('User already exists')
+        throw new GraphQLError('User already exists', {
+          extensions: {
+            code: ErrorCode.ALREADY_EXISTS,
+          }
+        })
       }
 
       const user = new User({
@@ -100,43 +133,61 @@ const userRresolver = {
     },
 
     deleteUser: async (parent: any, args: any, context: any) => {
-      try {
-
-        if (!context.token) {
-          throw new Error(ErrorCode.NOT_AUTHENTICATED)
-        }
-        const user = verifyUser(context.token)
-        if (!user) {
-          throw new Error(ErrorCode.NOT_AUTHENTICATED)
-        }
-
-        const { id } = args
-
-        const deletedUser = await User.findByIdAndDelete(id)
-        if (deletedUser) {
-          return {
-            success: true,
+      if (!context.token) {
+        throw new GraphQLError('Not Authenticated', {
+          extensions: {
+            code: ErrorCode.JWT_TOKEN_MISSING
           }
-
-        }
-        throw new Error('User not found')
-      } catch (error) {
-        if (error instanceof Error) {
-          return {
-            success: false,
-            message: error.message
+        })
+      }
+      const user = verifyUser(context.token)
+      if (!user) {
+        throw new GraphQLError('User not verified', {
+          extensions: {
+            code: ErrorCode.NOT_AUTHENTICATED
           }
+        })
+      }
+
+      const { id } = args
+
+      const deletedUser = await User.findByIdAndDelete(id)
+      if (deletedUser) {
+        return {
+          success: true,
         }
       }
+      throw new GraphQLError('User not found', {
+        extensions: {
+          code: ErrorCode.USER_NOT_FOUND
+        }
+      })
+
     },
     updateAddress: async (parent: any, args: any, context: any) => {
       if (!context.token) {
-        throw new Error(ErrorCode.NOT_AUTHENTICATED)
+        throw new GraphQLError('Not Authenticated', {
+          extensions: {
+            code: ErrorCode.JWT_TOKEN_MISSING
+          }
+        })
       }
 
       const user = verifyUser(context.token)
-      if (!user || user.role !== UserRole.CUSTOMER) {
-        throw new Error(ErrorCode.NOT_AUTHENTICATED)
+      if (!user) {
+        throw new GraphQLError('User not verified', {
+          extensions: {
+            code: ErrorCode.NOT_AUTHENTICATED
+          }
+        })
+      }
+
+      if (user.role !== UserRole.ADMIN) {
+        throw new GraphQLError('User not authorized', {
+          extensions: {
+            code: ErrorCode.WRONG_USER_TYPE
+          }
+        })
       }
 
       const { street, city, state, postcode, country } = args.input
@@ -152,86 +203,107 @@ const userRresolver = {
       const errors: FormError = validateForm(validateSchema)
 
       if (Object.keys(errors).length > 0) {
-        throw new Error(JSON.stringify(errors))
+        throw new GraphQLError('Login fields error', {
+          extensions: {
+            code: ErrorCode.VALIDATION_ERROR,
+            extra: errors
+          }
+        })
       }
       const finduser = await User.findById(user.id)
       if (!finduser) {
-        throw new Error(ErrorCode.USER_NOT_FOUND)
+        throw new GraphQLError('User not found', {
+          extensions: {
+            code: ErrorCode.USER_NOT_FOUND
+          }
+        })
       }
       const address: Address = {
         street, city, state, country, postcode
       }
 
-      try {
-
-        const updateStatus = await User.updateOne(
-          { _id: user.id },
-          {
-            $set: {
-              address
-            }
-
+      const updateStatus = await User.updateOne(
+        { _id: user.id },
+        {
+          $set: {
+            address
           }
-        )
 
-        const { acknowledged, modifiedCount } = updateStatus
-        if (acknowledged && modifiedCount === 1) {
-          return address
         }
-        else throw new Error(ErrorCode.INTERNAL_SERVER_ERROR)
+      )
 
-      } catch (error) {
-        if (error instanceof Error)
-          throw new Error(error.message)
+      const { acknowledged, modifiedCount } = updateStatus
+      if (acknowledged && modifiedCount === 1) {
+        return address
       }
 
     },
     updateAccount: async (parent: any, args: any, context: any) => {
-      try {
 
-        if (!context.token) {
-          throw new Error(ErrorCode.NOT_AUTHENTICATED)
-        }
 
-        const user = verifyUser(context.token)
-        if (!user || user.role !== UserRole.CUSTOMER) {
-          throw new Error(ErrorCode.NOT_AUTHENTICATED)
-        }
-
-        const { firstName, lastName, email } = args.input
-
-        const validateSchema: ValidateSchema<any>[] = [
-          { value: firstName, name: 'firstName', type: 'string' },
-          { value: lastName, name: 'lastName', type: 'string' },
-          { value: email, name: 'email', type: 'email' },
-        ]
-
-        const errors: FormError = validateForm(validateSchema)
-
-        if (Object.keys(errors).length > 0) {
-          throw new Error(JSON.stringify(errors))
-        }
-        const finduser = await User.findById(user.id)
-        if (!finduser) {
-          throw new Error(ErrorCode.USER_NOT_FOUND)
-        }
-
-        const updatedUser = await User.findByIdAndUpdate(
-          user.id,
-          {
-            firstName,
-            lastName,
-            email
-          },
-          { new: true }
-        )
-
-        return updatedUser
-      } catch (error) {
-        if (error instanceof Error)
-          throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
+      if (!context.token) {
+        throw new GraphQLError('Not Authenticated', {
+          extensions: {
+            code: ErrorCode.JWT_TOKEN_MISSING
+          }
+        })
       }
 
+      const user = verifyUser(context.token)
+      if (!user) {
+        throw new GraphQLError('User not verified', {
+          extensions: {
+            code: ErrorCode.NOT_AUTHENTICATED
+          }
+        })
+      }
+
+      if (user.role !== UserRole.ADMIN) {
+        throw new GraphQLError('User not authorized', {
+          extensions: {
+            code: ErrorCode.WRONG_USER_TYPE
+          }
+        })
+      }
+
+      const { firstName, lastName, email } = args.input
+
+      const validateSchema: ValidateSchema<any>[] = [
+        { value: firstName, name: 'firstName', type: 'string' },
+        { value: lastName, name: 'lastName', type: 'string' },
+        { value: email, name: 'email', type: 'email' },
+      ]
+
+      const errors: FormError = validateForm(validateSchema)
+
+      if (Object.keys(errors).length > 0) {
+        throw new GraphQLError('Login fields error', {
+          extensions: {
+            code: ErrorCode.VALIDATION_ERROR,
+            extra: errors
+          }
+        })
+      }
+      const finduser = await User.findById(user.id)
+      if (!finduser) {
+        throw new GraphQLError('User not found', {
+          extensions: {
+            code: ErrorCode.USER_NOT_FOUND
+          }
+        })
+      }
+
+      const updatedUser = await User.findByIdAndUpdate(
+        user.id,
+        {
+          firstName,
+          lastName,
+          email
+        },
+        { new: true }
+      )
+
+      return updatedUser
     }
 
   }

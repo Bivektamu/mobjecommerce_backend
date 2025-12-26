@@ -3,63 +3,81 @@ import Review from "../../dataLayer/schema/Review";
 import { ErrorCode, FormError, ReviewType, User, UserRole, ValidateSchema } from "../../typeDefs";
 import verifyUser from "../../utilities/verifyUser";
 import validateForm from "../../utilities/validateForm";
+import { GraphQLError } from "graphql";
 
 const reviewResolver = {
     Query: {
         productReviews: async (parent: any, args: any) => {
-            try {
-                const productId = args.id
-                if(!productId) {
-                    throw new Error(ErrorCode.INPUT_ERROR)
-                }
-                const reviews = await Review.find({ productId }).populate('userId', 'email firstName lastName')
-                return reviews
-            } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(error.message || ErrorCode.INTERNAL_SERVER_ERROR)
-                }
-
+            const productId = args.id
+            if (!productId) {
+                throw new GraphQLError('Product ID not provided', {
+                    extensions: {
+                        code: ErrorCode.INPUT_ERROR
+                    }
+                })
             }
-
+            const reviews = await Review.find({ productId }).populate('userId', 'email firstName lastName')
+            return reviews
         },
+
         reviews: async (parent: any, args: any, context: any) => {
-
-            try {
-                if (!context.token) {
-                    throw new Error('Not Authenticated')
-                }
-
-                const user = verifyUser(context.token)
-
-                if (!user || user.role !== UserRole.ADMIN) {
-                    throw new Error('Not Authenticated')
-                }
-
-                const reviews = await Review.find().populate("userId", "firstName lastName email").populate('productId', 'title imgs')
-
-                return reviews
-
-            } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(error.message)
-                }
-
-            }
-        }
-
-
-    },
-    Mutation: {
-        createReview: async (parent: any, args: any, context: any) => {
-
             if (!context.token) {
-                throw new Error('Not Authenticated')
+                throw new GraphQLError('Not Authenticated', {
+                    extensions: {
+                        code: ErrorCode.JWT_TOKEN_MISSING
+                    }
+                })
             }
 
             const user = verifyUser(context.token)
 
-            if (!user || user.role !== UserRole.CUSTOMER) {
-                throw new Error('Not Authenticated')
+            if (!user) {
+                throw new GraphQLError('User not verified', {
+                    extensions: {
+                        code: ErrorCode.NOT_AUTHENTICATED
+                    }
+                })
+            }
+
+            if (user.role !== UserRole.ADMIN) {
+                throw new GraphQLError('User not authorized', {
+                    extensions: {
+                        code: ErrorCode.WRONG_USER_TYPE
+                    }
+                })
+            }
+
+            const reviews = await Review.find().populate("userId", "firstName lastName email").populate('productId', 'title imgs')
+            return reviews
+        }
+    },
+
+    Mutation: {
+        createReview: async (parent: any, args: any, context: any) => {
+            if (!context.token) {
+                throw new GraphQLError('Not Authenticated', {
+                    extensions: {
+                        code: ErrorCode.JWT_TOKEN_MISSING
+                    }
+                })
+            }
+
+            const user = verifyUser(context.token)
+
+            if (!user) {
+                throw new GraphQLError('User not verified', {
+                    extensions: {
+                        code: ErrorCode.NOT_AUTHENTICATED
+                    }
+                })
+            }
+
+            if (user.role !== UserRole.CUSTOMER) {
+                throw new GraphQLError('User not authorized', {
+                    extensions: {
+                        code: ErrorCode.WRONG_USER_TYPE
+                    }
+                })
             }
 
             const { rating, productId, userId, review } = args.input
@@ -73,7 +91,12 @@ const reviewResolver = {
 
             const errors: FormError = validateForm(validateSchema)
             if (Object.keys(errors).length > 0) {
-                throw new Error(JSON.stringify(errors))
+                throw new GraphQLError('Login fields error', {
+                    extensions: {
+                        code: ErrorCode.VALIDATION_ERROR,
+                        extra: errors
+                    }
+                })
             }
 
             const newReview = new Review({
@@ -84,78 +107,95 @@ const reviewResolver = {
             })
 
             return await newReview.save()
-
-
         },
+
         editReview: async (parent: any, args: any, context: any) => {
-
-            try {
-                if (!context.token) {
-                    throw new Error('Not Authenticated')
-                }
-
-                const user = verifyUser(context.token)
-
-                if (!user || user.role !== UserRole.CUSTOMER) {
-                    throw new Error('Not Authenticated')
-                }
-
-                const { rating, review, id } = args.input
-
-                const validateSchema: ValidateSchema<any>[] = [
-                    { value: rating, name: 'rating', type: 'number' },
-                    { value: review, name: 'review', type: 'string' },
-                ]
-
-                const errors: FormError = validateForm(validateSchema)
-                if (Object.keys(errors).length > 0) {
-                    throw new Error(JSON.stringify(errors))
-                }
-
-                const editedReview = await Review.findByIdAndUpdate(
-                    id,
-                    {
-                        rating,
-                        review
-                    })
-
-                return editedReview
-
-
-            } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(error.message)
-                }
+            if (!context.token) {
+                throw new GraphQLError('Not Authenticated', {
+                    extensions: {
+                        code: ErrorCode.JWT_TOKEN_MISSING
+                    }
+                })
             }
+
+            const user = verifyUser(context.token)
+
+            if (!user) {
+                throw new GraphQLError('User not verified', {
+                    extensions: {
+                        code: ErrorCode.NOT_AUTHENTICATED
+                    }
+                })
+            }
+
+            if (user.role !== UserRole.CUSTOMER) {
+                throw new GraphQLError('User not authorized', {
+                    extensions: {
+                        code: ErrorCode.WRONG_USER_TYPE
+                    }
+                })
+            }
+            const { rating, review, id } = args.input
+
+            const validateSchema: ValidateSchema<any>[] = [
+                { value: rating, name: 'rating', type: 'number' },
+                { value: review, name: 'review', type: 'string' },
+            ]
+
+            const errors: FormError = validateForm(validateSchema)
+            if (Object.keys(errors).length > 0) {
+                throw new GraphQLError('Edit Review fields error', {
+                    extensions: {
+                        code: ErrorCode.VALIDATION_ERROR,
+                        extra: errors
+                    }
+                })
+            }
+
+            const editedReview = await Review.findByIdAndUpdate(
+                id,
+                {
+                    rating,
+                    review
+                })
+
+            return editedReview
         },
         deleteReview: async (parent: any, args: any, context: any) => {
 
-            try {
-                if (!context.token) {
-                    throw new Error('Not Authenticated')
-                }
 
-                const user = verifyUser(context.token)
-
-                if (!user) {
-                    throw new Error('Not Authenticated')
-                }
-
-                const { id } = args
-                const deletedReview = await Review.findByIdAndDelete(id)
-                if (deletedReview) {
-                    return {
-                        success: true,
+            if (!context.token) {
+                throw new GraphQLError('Not Authenticated', {
+                    extensions: {
+                        code: ErrorCode.JWT_TOKEN_MISSING
                     }
+                })
+            }
 
-                }
-                throw new Error('Review not found')
+            const user = verifyUser(context.token)
+
+            if (!user) {
+                throw new GraphQLError('User not verified', {
+                    extensions: {
+                        code: ErrorCode.NOT_AUTHENTICATED
+                    }
+                })
             }
-            catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(error.message)
+
+            const { id } = args
+            const deletedReview = await Review.findByIdAndDelete(id)
+            if (deletedReview) {
+                return {
+                    success: true,
                 }
+
             }
+            throw new GraphQLError('Review not found', {
+                extensions: {
+                    code: ErrorCode.NOT_FOUND
+                }
+            })
+
         }
     }
 };
