@@ -1,23 +1,32 @@
 import { CustomJwtPayload, ErrorCode, User, UserRole, verifiedUser } from "../typeDefs"
-import { verify } from "jsonwebtoken"
+import { JsonWebTokenError, TokenExpiredError, verify } from "jsonwebtoken"
+
 
 const verifyUser = (token: string) => {
+
+    const JWT_SECRET = process.env.JWTSECRET // because in serverless environment this variable is gurranted to run and be available at runtime but not sure in build time
+
+    if (!JWT_SECRET) {
+        throw new Error('Jwt Secret not defined')
+    }
     try {
 
-        const verifiedUser: CustomJwtPayload = verify(token, process.env.JWTSECRET as string) as CustomJwtPayload
+        const verifiedUser: CustomJwtPayload = verify(token, JWT_SECRET) as CustomJwtPayload
 
-        if (verifiedUser) {
-            const user: verifiedUser = {
-                role: verifiedUser.role,
-                id: verifiedUser.id
-            }
-            return user
+        const user: verifiedUser = {
+            role: verifiedUser.role,
+            id: verifiedUser.id
         }
-        return null
+        return user
     } catch (error) {
-         if(error instanceof Error) {
-          throw new Error(ErrorCode.JWT_ERROR)
+        if (error instanceof TokenExpiredError) {
+            throw new Error(ErrorCode.JWT_TOKEN_EXPIRED)
         }
+        else if (error instanceof JsonWebTokenError) {
+            throw new Error(ErrorCode.JWT_TOKEN_INVALID)
+        }
+
+        throw new Error(ErrorCode.INTERNAL_SERVER_ERROR)
     }
 }
 

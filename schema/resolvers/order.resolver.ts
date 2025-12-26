@@ -12,7 +12,7 @@ const orderResolver = {
 
             try {
                 if (!context.token) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
                 }
 
                 const user = verifyUser(context.token)
@@ -47,7 +47,7 @@ const orderResolver = {
 
             try {
                 if (!context.token) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
                 }
 
                 const user = verifyUser(context.token)
@@ -78,7 +78,7 @@ const orderResolver = {
 
             try {
                 if (!context.token) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
                 }
 
                 const user = verifyUser(context.token)
@@ -112,7 +112,7 @@ const orderResolver = {
 
             try {
                 if (!context.token) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
                 }
 
                 const user = verifyUser(context.token)

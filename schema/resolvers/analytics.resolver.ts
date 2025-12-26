@@ -12,7 +12,7 @@ const analyticsResolver = {
         salesAnalytics: async (parent: any, args: any, context: any) => {
             try {
                 if (!context.token) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
                 }
                 const user = verifyUser(context.token)
 
@@ -76,7 +76,7 @@ const analyticsResolver = {
         orderAnalytics: async (parent: any, args: any, context: any) => {
             try {
                 if (!context.token) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
                 }
                 const user = verifyUser(context.token)
 
@@ -133,7 +133,7 @@ const analyticsResolver = {
         userAnalytics: async (parent: any, args: any, context: any) => {
             try {
                 if (!context.token) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
                 }
                 const user = verifyUser(context.token)
 
@@ -197,7 +197,7 @@ const analyticsResolver = {
         salesOverTime: async (parent: any, args: any, context: any) => {
             try {
                 if (!context.token) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
                 }
                 const user = verifyUser(context.token)
 
@@ -253,7 +253,7 @@ const analyticsResolver = {
         lowStockProducts: async (parent: any, args: any, context: any) => {
             try {
                 if (!context.token) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
                 }
                 const user = verifyUser(context.token)
 
@@ -290,7 +290,7 @@ const analyticsResolver = {
         ordersByCategory: async (parent: any, args: any, context: any) => {
             try {
                 if (!context.token) {
-                    throw new Error(ErrorCode.NOT_AUTHENTICATED)
+                    throw new Error(ErrorCode.JWT_TOKEN_MISSING)
                 }
                 const user = verifyUser(context.token)
 
