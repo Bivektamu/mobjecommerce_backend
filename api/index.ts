@@ -33,7 +33,7 @@ const server = new ApolloServer<MyContext>({
 });
 
 async function startServer() {
-  connectDB()
+  await connectDB()
 
   await server.start();
 
@@ -51,7 +51,7 @@ async function startServer() {
     }));
 
     await new Promise<void>((resolve) => httpServer.listen({ port: 3000 }, resolve));
-    // console.log(`🚀 Server ready in port 3000. Graphql testing link in http://localhost:3000/graphql`);
+    console.log(`🚀 Server is ready.`);
 
 }
 
