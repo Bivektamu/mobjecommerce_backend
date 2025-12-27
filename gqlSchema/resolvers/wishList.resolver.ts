@@ -1,6 +1,6 @@
 import { GraphQLError } from "graphql"
 import WishList from "../../dataLayer/schema/WishList"
-import { ErrorCode, UserRole } from "../../typeDefs"
+import { ErrorCode, UserRole } from "../../types"
 import verifyUser from "../../utilities/verifyUser"
 
 const wishListResolver = {

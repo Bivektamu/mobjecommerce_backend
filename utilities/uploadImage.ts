@@ -1,6 +1,6 @@
 import path from "path";
 import fs from 'fs'
-import { inputProductImg } from "../typeDefs";
+import { inputProductImg } from "../types";
 import mongoose from "mongoose";
 import { S3Client } from "@aws-sdk/client-s3"; // ES Modules import
 import { Upload } from "@aws-sdk/lib-storage"

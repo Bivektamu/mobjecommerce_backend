@@ -1,6 +1,6 @@
 import { Query } from "mongoose";
 import Review from "../../dataLayer/schema/Review";
-import { ErrorCode, FormError, ReviewType, User, UserRole, ValidateSchema } from "../../typeDefs";
+import { ErrorCode, FormError, ReviewType, User, UserRole, ValidateSchema } from "../../types";
 import verifyUser from "../../utilities/verifyUser";
 import validateForm from "../../utilities/validateForm";
 import { GraphQLError } from "graphql";

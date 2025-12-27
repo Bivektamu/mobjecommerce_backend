@@ -1,5 +1,5 @@
 import { GraphQLError } from "graphql"
-import { CustomJwtPayload, ErrorCode, User, UserRole, verifiedUser } from "../typeDefs"
+import { CustomJwtPayload, ErrorCode, User, UserRole, verifiedUser } from "../types"
 import { JsonWebTokenError, TokenExpiredError, verify } from "jsonwebtoken"
 
 

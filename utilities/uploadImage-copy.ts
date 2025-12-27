@@ -1,6 +1,6 @@
 import path from "path";
 import fs from 'fs'
-import { inputProductImg } from "../typeDefs";
+import { inputProductImg } from "../types";
 import mongoose from "mongoose";
 
 const uploadImage = async (item: inputProductImg, folder: string, name: string) => {

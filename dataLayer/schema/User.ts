@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { User } from "../../typeDefs";
+import { User } from "../../types";
 
 const UserSchema = new Schema({
     firstName: {
@@ -51,6 +51,9 @@ const UserSchema = new Schema({
         country: {
             type: String,
         },
+    },
+    refreshToken: {
+        type: String
     }
 
 })

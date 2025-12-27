@@ -4,7 +4,7 @@ import path from "path";
 import Product from "../../dataLayer/schema/Product";
 import verifyUser from "../../utilities/verifyUser";
 import uploadImage from "../../utilities/uploadImage";
-import { ErrorCode, inputProductImg, ProductImage, UserRole } from '../../typeDefs';
+import { ErrorCode, inputProductImg, ProductImage, UserRole } from '../../types';
 import deleteImages from '../../utilities/deleteImages';
 import { GraphQLError } from 'graphql';
 

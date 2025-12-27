@@ -1,6 +1,6 @@
 import Order from "../../dataLayer/schema/Order"
 import User from "../../dataLayer/schema/User"
-import { CompletedOrder, ErrorCode, OrderItemPopulated, OrderItemsCategoryCounter, OrderStatus, unknownShape, UserRole } from "../../typeDefs"
+import { CompletedOrder, ErrorCode, OrderItemPopulated, OrderItemsCategoryCounter, OrderStatus, unknownShape, UserRole } from "../../types"
 import verifyUser from "../../utilities/verifyUser"
 
 import { startFiscalDate, currentStartDate, currentEndDate, pastStartDate, pastEndDate } from '../../utilities/getDates'

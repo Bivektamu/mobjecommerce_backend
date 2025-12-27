@@ -1,6 +1,6 @@
 import path from "path";
 import fs from 'fs'
-import { ProductImage, inputProductImg } from "../typeDefs";
+import { ProductImage, inputProductImg } from "../types";
 import mongoose from "mongoose";
 
 const deleteImage = async (image: string) => {

@@ -1,5 +1,5 @@
 import User from "../../dataLayer/schema/User";
-import { Address, ErrorCode, FormError, UserRole, ValidateSchema } from "../../typeDefs";
+import { Address, ErrorCode, FormError, UserRole, ValidateSchema } from "../../types";
 import validateForm from "../../utilities/validateForm";
 import bcrypt from 'bcrypt'
 import verifyUser from "../../utilities/verifyUser";

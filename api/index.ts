@@ -4,18 +4,22 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import express from 'express'
 import {graphqlUploadExpress} from "graphql-upload-ts";
 import cors from 'cors'
+import {Request, Response} from 'express'
 import http from 'http';
 
 
-import resolvers from '../schema/resolvers/index.resolver';
+import resolvers from '../gqlSchema/resolvers/index.resolver';
 
 import connectDB from '../dataLayer';
-import typeDefs from '../schema/typeDefs/index.typeDef'
-import {MyContext } from '../typeDefs';
+import typeDefs from '../gqlSchema/typeDefs/index.typeDef'
+import {MyContext } from '../types';
+import { getAuth } from '../middleware/auth.middleware';
+import cookieParser from 'cookie-parser';
 
 
 const app = express();
 
+app.use(cookieParser())
 
 app.use(express.static('public'))
 app.use(graphqlUploadExpress({
@@ -24,7 +28,12 @@ app.use(graphqlUploadExpress({
 
 const httpServer = http.createServer(app);
 
-const server = new ApolloServer<MyContext>({
+interface Context {
+  req:Request,
+  res:Response
+}
+
+const server = new ApolloServer<Context>({
   typeDefs,
   resolvers,
   csrfPrevention: true,
@@ -45,8 +54,10 @@ async function startServer() {
     ),
     express.json(),
     expressMiddleware(server, {
-      context: async ({ req }) => ({ 
-        token: req.headers.token,
+      context: async ({ req, res }) => ({ 
+        req, 
+        res,
+        auth: getAuth(req)
        }),
     }));
 

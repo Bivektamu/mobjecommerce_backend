@@ -1,6 +1,6 @@
 import { JwtPayload } from "jsonwebtoken"
 import mongoose, { ObjectId } from "mongoose"
-
+import {Request, Response} from 'express'
 
 export type Address = {
     street: String,
@@ -22,7 +22,14 @@ export type User = {
     email: String,
     password: String,
     role: UserRole
-    googleId?:String
+    googleId?: String
+}
+
+export interface LoginInput {
+    input: {
+        email: String,
+        password: String
+    }
 }
 
 export interface CustomJwtPayload extends JwtPayload {
@@ -38,7 +45,9 @@ export interface verifiedUser {
 }
 
 export interface MyContext {
-    token?: String
+    req: Request,
+    res: Response,
+    auth: verifiedUser | null
 }
 
 

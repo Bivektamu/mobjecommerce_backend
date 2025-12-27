@@ -1,14 +1,15 @@
 import { SignOptions, sign } from 'jsonwebtoken'
 import verifyUser from '../../utilities/verifyUser';
-import { CustomJwtPayload, ErrorCode, FormError, UserRole, ValidateSchema } from '../../typeDefs';
+import { CustomJwtPayload, ErrorCode, FormError, LoginInput, MyContext, UserRole, ValidateSchema } from '../../types';
 import validateForm from '../../utilities/validateForm';
 import User from '../../dataLayer/schema/User';
 import bcrypt from 'bcrypt'
 import { OAuth2Client } from 'google-auth-library'
 import { GraphQLError } from 'graphql';
+import { createJwtTokens } from '../../utilities/tokenGenerator';
 const authResolver = {
   Mutation: {
-    logInAdmin: async (parent: any, args: any, context: any) => {
+    logInAdmin: async (_:any, args: LoginInput, context: any) => {
 
       const { email, password } = args.input
 
@@ -42,7 +43,7 @@ const authResolver = {
 
     },
 
-    logInUser: async (parent: any, args: any, context: any) => {
+    logInUser: async (_: any, args: LoginInput, context: MyContext) => {
 
       const { email, password } = args.input
 
@@ -78,7 +79,7 @@ const authResolver = {
         })
       }
 
-      const isMatched = await bcrypt.compare(password, user.password as string)
+      const isMatched = await bcrypt.compare(password as string, user.password as string)
 
       if (!isMatched) {
         throw new GraphQLError('Email or password wrong', {
@@ -93,21 +94,33 @@ const authResolver = {
         id: user.id
       }
 
-      const signOptions: SignOptions = {
-        expiresIn: '1h'
-      }
-      const secret: string = process.env.JWTSECRET as string
+      const { accessToken, refreshToken } = createJwtTokens(payload)
 
-      const token = sign(
-        payload,
-        secret,
-        signOptions
-      );
+      user.refreshToken = refreshToken
+      await user.save()
+
+      const {res} = context
+      res.cookie('access_token', accessToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 15 * 60 * 1000,
+        path: '/graphql'
+      })
+
+
+      res.cookie('refresh_token', refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/graphql'
+      })
 
       return {
-        token
+        isLoggedIn: true,
+        user: user
       }
-
 
     },
     logInGoogleUser: async (parent: any, args: any, context: any) => {
@@ -239,23 +252,24 @@ const authResolver = {
 
   },
   Query: {
-    getAuthStatus: (parent: any, args: any, context: any) => {
-      if (!context.token) {
+    getAuthStatus: async (context: MyContext) => {
+      const {auth} = context
+      if (!auth) {
         throw new GraphQLError('Not Authenticated', {
           extensions: {
             code: ErrorCode.JWT_TOKEN_MISSING
           }
         })
       }
-      const user = verifyUser(context.token)
-      if (!user) {
-        throw new GraphQLError('User not verified', {
-          extensions: {
-            code: ErrorCode.NOT_AUTHENTICATED
-          }
-        })
-      }
-      return { isLoggedIn: true, user: user }
+      // const user = verifyUser(context.token)
+      // if (!user) {
+      //   throw new GraphQLError('User not verified', {
+      //     extensions: {
+      //       code: ErrorCode.NOT_AUTHENTICATED
+      //     }
+      //   })
+      // }
+      return { isLoggedIn: true, user: 'user' }
     }
   },
 };

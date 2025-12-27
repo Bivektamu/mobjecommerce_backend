@@ -1,6 +1,6 @@
 import UserSchem from "../../dataLayer/schema/User"
 import Order from "../../dataLayer/schema/Order"
-import { ErrorCode, OrderedProduct, User, UserRole } from "../../typeDefs"
+import { ErrorCode, OrderedProduct, User, UserRole } from "../../types"
 import verifyUser from "../../utilities/verifyUser"
 import { GraphQLError } from "graphql"
 import Product from "../../dataLayer/schema/Product"

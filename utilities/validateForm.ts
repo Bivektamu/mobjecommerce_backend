@@ -1,4 +1,4 @@
-import { FormError, ValidateSchema } from "../typeDefs"
+import { FormError, ValidateSchema } from "../types"
 
 const validEmail: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const passwordRegex: RegExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/

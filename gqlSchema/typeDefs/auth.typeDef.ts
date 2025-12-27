@@ -28,7 +28,7 @@ const authTypeDef = gql`
 
   type Mutation {
     logInAdmin(input: LogInInput!): Token,
-    logInUser(input: LogInInput!): Token,
+    logInUser(input: LogInInput!): getAuthStatusPayload,
     logInGoogleUser(credential: String!): Token,
     changePassWord(input:ChangePassword):Boolean
   }
