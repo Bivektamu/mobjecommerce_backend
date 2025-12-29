@@ -3,7 +3,7 @@ import { CustomJwtPayload, ErrorCode, User, UserRole, verifiedUser } from "../ty
 import { JsonWebTokenError, TokenExpiredError, verify } from "jsonwebtoken"
 
 
-const verifyUser = (token: string, secret:string|null) => {
+const verifyUser = (token: string, secret: string | null) => {
     if (!secret) {
         throw new GraphQLError('Jwt Secret not defined', {
             extensions: {

@@ -16,6 +16,7 @@ const authTypeDef = gql`
 
     
     type getAuthStatusPayload {
+      accessToken: String,
       isLoggedIn: Boolean!,
       user:UserAuth
     }

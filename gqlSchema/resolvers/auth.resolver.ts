@@ -20,9 +20,9 @@ const authResolver = {
           }
         })
       }
-      const admin = await User.findOne({email})
+      const admin = await User.findOne({ email })
 
-      if(!admin) {
+      if (!admin) {
         throw new GraphQLError('Admin not created', {
           extensions: {
             code: ErrorCode.USER_NOT_FOUND
@@ -30,7 +30,7 @@ const authResolver = {
         })
       }
 
-      if(admin.role !== UserRole.ADMIN) {
+      if (admin.role !== UserRole.ADMIN) {
         throw new GraphQLError('User not authorized', {
           extensions: {
             code: ErrorCode.WRONG_USER_TYPE
@@ -43,17 +43,17 @@ const authResolver = {
         id: admin.id
       }
 
-     const {accessToken, refreshToken} = createJwtTokens(payload)
+      const { accessToken, refreshToken } = createJwtTokens(payload)
 
-     const {res} = context
-     setCookies(res, accessToken, refreshToken)
-     admin.refreshToken = refreshToken
-     await admin.save()
+      const { res } = context
+      setCookies(res, refreshToken)
+      admin.refreshToken = refreshToken
+      await admin.save()
 
-     return {
-      isLoggedIn: true,
-      user: payload
-     }
+      return {
+        isLoggedIn: true,
+        user: payload
+      }
     },
 
     logInUser: async (_: any, args: LoginInput, context: MyContext) => {
@@ -114,9 +114,10 @@ const authResolver = {
 
       const { res } = context
 
-      setCookies(res, accessToken, refreshToken)
+      setCookies(res, refreshToken)
 
       return {
+        accessToken,
         isLoggedIn: true,
         user: user
       }
@@ -163,15 +164,16 @@ const authResolver = {
         jwtPayload.id = user.id
       }
 
-      const {accessToken, refreshToken} = createJwtTokens(jwtPayload)
+      const { accessToken, refreshToken } = createJwtTokens(jwtPayload)
 
       user.refreshToken = refreshToken
       await user.save()
 
-      const {res} = context
-      setCookies(res, accessToken, refreshToken)
+      const { res } = context
+      setCookies(res, refreshToken)
 
       return {
+        accessToken,
         isLoggedIn: true,
         user: jwtPayload
       }
@@ -236,7 +238,6 @@ const authResolver = {
 
       return true
     },
-
     logOutUser: async (_: any, args: any, context: MyContext) => {
       const { res, auth } = context
       const user = await User.findById(auth?.id)
@@ -249,6 +250,7 @@ const authResolver = {
         isLoggedIn: false
       }
     },
+
     refreshToken: async (_: any, args: any, context: MyContext) => {
       const { req, res } = context
       const refresh_token = req.cookies.refresh_token
@@ -261,7 +263,7 @@ const authResolver = {
       }
       const auth = verifyUser(refresh_token, process.env.JWT_REFRESH_TOKEN_SECRET || null)
       const user = await User.findById(auth.id)
-      if(!user || user.refreshToken !== refresh_token) {
+      if (!user || user.refreshToken !== refresh_token) {
         resetCookies(res)
         throw new GraphQLError('Token Revoked', {
           extensions: {
@@ -270,26 +272,31 @@ const authResolver = {
         })
       }
 
-      const payload:CustomJwtPayload = {
+      const payload: CustomJwtPayload = {
         role: user.role as UserRole,
-        id:user.id
+        id: user.id
       }
-      const {accessToken, refreshToken} = createJwtTokens(payload)
+      const { accessToken, refreshToken } = createJwtTokens(payload)
       user.refreshToken = refreshToken
       await user.save()
-      setCookies(res, accessToken, refreshToken)
-
+      setCookies(res, refreshToken)
       return {
+        accessToken,
         isLoggedIn: true,
-        user:payload
+        user: payload
       }
 
     }
   },
   Query: {
     getAuthStatus: async (_: any, args: any, context: MyContext) => {
+
       const { auth } = context
-      if (!auth) return { isLoggedIn: false }
+      if (!auth) throw new GraphQLError('User not authenticated', {
+        extensions: {
+          code: ErrorCode.NOT_AUTHENTICATED
+        }
+      })
       return {
         isLoggedIn: true,
         user: auth

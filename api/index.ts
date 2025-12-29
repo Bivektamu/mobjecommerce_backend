@@ -7,12 +7,10 @@ import cors from 'cors'
 import {Request, Response} from 'express'
 import http from 'http';
 
-
 import resolvers from '../gqlSchema/resolvers/index.resolver';
 
 import connectDB from '../dataLayer';
 import typeDefs from '../gqlSchema/typeDefs/index.typeDef'
-import {MyContext } from '../types';
 import { getAuth } from '../middleware/auth.middleware';
 import cookieParser from 'cookie-parser';
 
@@ -49,7 +47,7 @@ async function startServer() {
   app.use('/graphql',
     cors<cors.CorsRequest>(
       {
-        origin:['http://localhost:5173', 'https://mobjecommerce.netlify.app'],
+        origin:[process.env.LOCAL_URI!, process.env.PROD_URI!],
         credentials: true, 
       }
     ),
@@ -58,7 +56,7 @@ async function startServer() {
       context: async ({ req, res }) => ({ 
         req, 
         res,
-        auth: getAuth(req.cookies.access_token)
+        auth: getAuth(req.headers.authorization || null)
        }),
     }));
 
