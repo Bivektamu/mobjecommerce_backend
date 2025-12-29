@@ -1,6 +1,6 @@
 import { Query } from "mongoose";
 import Review from "../../dataLayer/schema/Review";
-import { ErrorCode, FormError, ReviewType, User, UserRole, ValidateSchema } from "../../types";
+import { ErrorCode, FormError, MyContext, ReviewType, User, UserRole, ValidateSchema } from "../../types";
 import verifyUser from "../../utilities/verifyUser";
 import validateForm from "../../utilities/validateForm";
 import { GraphQLError } from "graphql";
@@ -20,8 +20,9 @@ const reviewResolver = {
             return reviews
         },
 
-        reviews: async (parent: any, args: any, context: any) => {
-            if (!context.token) {
+        reviews: async (parent: any, args: any, context: MyContext) => {
+            const { auth } = context
+            if (!auth) {
                 throw new GraphQLError('Not Authenticated', {
                     extensions: {
                         code: ErrorCode.JWT_TOKEN_MISSING
@@ -29,17 +30,7 @@ const reviewResolver = {
                 })
             }
 
-            const user = verifyUser(context.token)
-
-            if (!user) {
-                throw new GraphQLError('User not verified', {
-                    extensions: {
-                        code: ErrorCode.NOT_AUTHENTICATED
-                    }
-                })
-            }
-
-            if (user.role !== UserRole.ADMIN) {
+            if (auth.role !== UserRole.ADMIN) {
                 throw new GraphQLError('User not authorized', {
                     extensions: {
                         code: ErrorCode.WRONG_USER_TYPE
@@ -53,8 +44,9 @@ const reviewResolver = {
     },
 
     Mutation: {
-        createReview: async (parent: any, args: any, context: any) => {
-            if (!context.token) {
+        createReview: async (parent: any, args: any, context: MyContext) => {
+            const { auth } = context
+            if (!auth) {
                 throw new GraphQLError('Not Authenticated', {
                     extensions: {
                         code: ErrorCode.JWT_TOKEN_MISSING
@@ -62,17 +54,7 @@ const reviewResolver = {
                 })
             }
 
-            const user = verifyUser(context.token)
-
-            if (!user) {
-                throw new GraphQLError('User not verified', {
-                    extensions: {
-                        code: ErrorCode.NOT_AUTHENTICATED
-                    }
-                })
-            }
-
-            if (user.role !== UserRole.CUSTOMER) {
+            if (auth.role !== UserRole.CUSTOMER) {
                 throw new GraphQLError('User not authorized', {
                     extensions: {
                         code: ErrorCode.WRONG_USER_TYPE
@@ -109,8 +91,9 @@ const reviewResolver = {
             return await newReview.save()
         },
 
-        editReview: async (parent: any, args: any, context: any) => {
-            if (!context.token) {
+        editReview: async (parent: any, args: any, context: MyContext) => {
+            const { auth } = context
+            if (!auth) {
                 throw new GraphQLError('Not Authenticated', {
                     extensions: {
                         code: ErrorCode.JWT_TOKEN_MISSING
@@ -118,17 +101,7 @@ const reviewResolver = {
                 })
             }
 
-            const user = verifyUser(context.token)
-
-            if (!user) {
-                throw new GraphQLError('User not verified', {
-                    extensions: {
-                        code: ErrorCode.NOT_AUTHENTICATED
-                    }
-                })
-            }
-
-            if (user.role !== UserRole.CUSTOMER) {
+            if (auth.role !== UserRole.CUSTOMER) {
                 throw new GraphQLError('User not authorized', {
                     extensions: {
                         code: ErrorCode.WRONG_USER_TYPE
@@ -161,23 +134,13 @@ const reviewResolver = {
 
             return editedReview
         },
-        deleteReview: async (parent: any, args: any, context: any) => {
 
-
-            if (!context.token) {
+        deleteReview: async (parent: any, args: any, context: MyContext) => {
+            const { auth } = context
+            if (!auth) {
                 throw new GraphQLError('Not Authenticated', {
                     extensions: {
                         code: ErrorCode.JWT_TOKEN_MISSING
-                    }
-                })
-            }
-
-            const user = verifyUser(context.token)
-
-            if (!user) {
-                throw new GraphQLError('User not verified', {
-                    extensions: {
-                        code: ErrorCode.NOT_AUTHENTICATED
                     }
                 })
             }
@@ -195,7 +158,6 @@ const reviewResolver = {
                     code: ErrorCode.NOT_FOUND
                 }
             })
-
         }
     }
 };

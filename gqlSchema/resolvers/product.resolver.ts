@@ -4,18 +4,18 @@ import path from "path";
 import Product from "../../dataLayer/schema/Product";
 import verifyUser from "../../utilities/verifyUser";
 import uploadImage from "../../utilities/uploadImage";
-import { ErrorCode, inputProductImg, ProductImage, UserRole } from '../../types';
+import { ErrorCode, inputProductImg, MyContext, ProductImage, UserRole } from '../../types';
 import deleteImages from '../../utilities/deleteImages';
 import { GraphQLError } from 'graphql';
 
 
 const productResolver = {
   Query: {
-    products: async (parent: any, args: any, context: any) => {
+    products: async (parent: any, args: any, context: MyContext) => {
       const products = await Product.find()
       return products
     },
-    product: async (parent: any, args: any, context: any) => {
+    product: async (parent: any, args: any, context: MyContext) => {
       const id = args.id
       const findproduct = await Product.findById(id)
       return findproduct
@@ -23,19 +23,10 @@ const productResolver = {
   },
 
   Mutation: {
-    createProduct: async (parent: any, args: any, context: any) => {
+    createProduct: async (parent: any, args: any, context: MyContext) => {
 
-      if (!context.token) {
-        throw new GraphQLError('Not Authenticated', {
-          extensions: {
-            code: ErrorCode.JWT_TOKEN_MISSING
-          }
-        })
-      }
-
-      const user = verifyUser(context.token)
-
-      if (!user) {
+      const { auth } = context
+      if (!auth) {
         throw new GraphQLError('User not verified', {
           extensions: {
             code: ErrorCode.NOT_AUTHENTICATED
@@ -43,7 +34,7 @@ const productResolver = {
         })
       }
 
-      if (user.role !== UserRole.ADMIN) {
+      if (auth.role !== UserRole.ADMIN) {
         throw new GraphQLError('User not authorized', {
           extensions: {
             code: ErrorCode.WRONG_USER_TYPE
@@ -76,19 +67,10 @@ const productResolver = {
 
     },
 
-    editProduct: async (parent: any, args: any, context: any) => {
+    editProduct: async (parent: any, args: any, context: MyContext) => {
 
-      if (!context.token) {
-        throw new GraphQLError('Not Authenticated', {
-          extensions: {
-            code: ErrorCode.JWT_TOKEN_MISSING
-          }
-        })
-      }
-
-      const user = verifyUser(context.token)
-
-      if (!user) {
+      const { auth } = context
+      if (!auth) {
         throw new GraphQLError('User not verified', {
           extensions: {
             code: ErrorCode.NOT_AUTHENTICATED
@@ -96,7 +78,7 @@ const productResolver = {
         })
       }
 
-      if (user.role !== UserRole.ADMIN) {
+      if (auth.role !== UserRole.ADMIN) {
         throw new GraphQLError('User not authorized', {
           extensions: {
             code: ErrorCode.WRONG_USER_TYPE
@@ -111,8 +93,8 @@ const productResolver = {
         throw new GraphQLError('Product not found', {
           extensions: {
             code: ErrorCode.NOT_FOUND
-          } 
-        }) 
+          }
+        })
       }
 
       let toUpdateImgs = [...oldImgs]
@@ -141,18 +123,9 @@ const productResolver = {
     },
 
     // Delete Product Mutation
-    deleteProduct: async (parent: any, args: any, context: any) => {
-      if (!context.token) {
-        throw new GraphQLError('Not Authenticated', {
-          extensions: {
-            code: ErrorCode.JWT_TOKEN_MISSING
-          }
-        })
-      }
-
-      const user = verifyUser(context.token)
-
-      if (!user) {
+    deleteProduct: async (parent: any, args: any, context: MyContext) => {
+      const { auth } = context
+      if (!auth) {
         throw new GraphQLError('User not verified', {
           extensions: {
             code: ErrorCode.NOT_AUTHENTICATED
@@ -160,7 +133,7 @@ const productResolver = {
         })
       }
 
-      if (user.role !== UserRole.ADMIN) {
+      if (auth.role !== UserRole.ADMIN) {
         throw new GraphQLError('User not authorized', {
           extensions: {
             code: ErrorCode.WRONG_USER_TYPE

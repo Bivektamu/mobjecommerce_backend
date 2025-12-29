@@ -1,6 +1,6 @@
 import { JwtPayload } from "jsonwebtoken"
 import mongoose, { ObjectId } from "mongoose"
-import {Request, Response} from 'express'
+import { Request, Response } from 'express'
 
 export type Address = {
     street: String,
@@ -98,7 +98,8 @@ export enum ErrorCode {
     JWT_TOKEN_EXPIRED = 'JWT_TOKEN_EXPIRED',
     JWT_TOKEN_INVALID = 'JWT_TOKEN_INVALID',
     JWT_TOKEN_MISSING = 'JWT_TOKEN_MISSING',
-    GOOGLE_ERROR = 'GOOGLE_ERROR'
+    GOOGLE_ERROR = 'GOOGLE_ERROR',
+    TOKEN_REVOKED = 'TOKEN_REVOKED'
 }
 
 export enum OrderStatus {

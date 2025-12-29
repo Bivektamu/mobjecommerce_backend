@@ -7,4 +7,13 @@ import reviewTypeDef from "./review.typeDef";
 import wishListTypeDef from "./wishList.typeDef";
 import analyticsTypeDef from "./analytics.typeDef";
 
-export default [globalTypeDef, authTypeDef, userTypeDef, productTypeDef, reviewTypeDef, orderTypeDef, wishListTypeDef, analyticsTypeDef]
+export default [
+    globalTypeDef,
+    authTypeDef,
+    userTypeDef,
+    productTypeDef,
+    reviewTypeDef,
+    orderTypeDef,
+    wishListTypeDef,
+    analyticsTypeDef
+]

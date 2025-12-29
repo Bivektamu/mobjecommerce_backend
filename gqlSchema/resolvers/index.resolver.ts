@@ -34,28 +34,15 @@ const DateScalar = new GraphQLScalarType({
 const globalResolver = {
     Upload: GraphQLUpload,
     Date: DateScalar,
-    
-    // Mutation: {
-    //     uploadFile: async (parent: any, args: any) => {
-
-    //         const file = await args.input.file
-            
-            
-    //         const { createReadStream, filename, mimetype, encoding } = file;
-    //         const stream = createReadStream()
-
-    //         const pathName = path.join(process.cwd(), `public/images/${filename}`)
-
-    //         await stream.pipe(fs.createWriteStream(pathName))
-
-    //         return {
-    //             url:`http://localhost:3000/images/${filename}`
-    //         }
-    //     },
-
-      
-    // },
-   
 }
 
-export default [globalResolver, userRresolver, adminRresolver, productResolver, orderResolver, wishListResolver, reviewResolver, analyticsResolver]
+export default [
+    globalResolver,
+    userRresolver,
+    adminRresolver,
+    productResolver,
+    orderResolver,
+    wishListResolver,
+    reviewResolver,
+    analyticsResolver
+]

@@ -1,5 +1,5 @@
 import User from "../../dataLayer/schema/User";
-import { Address, ErrorCode, FormError, UserRole, ValidateSchema } from "../../types";
+import { Address, ErrorCode, FormError, MyContext, UserRole, ValidateSchema } from "../../types";
 import validateForm from "../../utilities/validateForm";
 import bcrypt from 'bcrypt'
 import verifyUser from "../../utilities/verifyUser";
@@ -7,25 +7,17 @@ import { GraphQLError } from "graphql";
 
 const userRresolver = {
   Query: {
-    users: async (parent: any, args: any, context: any) => {
-      if (!context.token) {
-        throw new GraphQLError('Not Authenticated', {
-          extensions: {
-            code: ErrorCode.JWT_TOKEN_MISSING
-          }
-        })
-      }
-      const user = verifyUser(context.token)
-
-      if (!user) {
-        throw new GraphQLError('User not verified', {
+    users: async (parent: any, args: any, context: MyContext) => {
+      const { auth } = context
+      if (!auth) {
+        throw new GraphQLError('User not verfied', {
           extensions: {
             code: ErrorCode.NOT_AUTHENTICATED
           }
         })
       }
 
-      if (user.role !== UserRole.ADMIN) {
+      if (auth.role !== UserRole.ADMIN) {
         throw new GraphQLError('User not authorized', {
           extensions: {
             code: ErrorCode.WRONG_USER_TYPE
@@ -35,19 +27,11 @@ const userRresolver = {
       const users = await User.find()
       return users
     },
-    user: async (parent: any, args: any, context: any) => {
+    user: async (parent: any, args: any, context: MyContext) => {
 
-      if (!context.token) {
-        throw new GraphQLError('Not Authenticated', {
-          extensions: {
-            code: ErrorCode.JWT_TOKEN_MISSING
-          }
-        })
-      }
-      const user = verifyUser(context.token)
-
-      if (!user) {
-        throw new GraphQLError('User not verified', {
+      const { auth } = context
+      if (!auth) {
+        throw new GraphQLError('User not verfied', {
           extensions: {
             code: ErrorCode.NOT_AUTHENTICATED
           }
@@ -88,6 +72,7 @@ const userRresolver = {
     },
 
   },
+
   Mutation: {
     createUser: async (parent: any, args: any) => {
       const { email, password, firstName, lastName } = args.input
@@ -132,23 +117,15 @@ const userRresolver = {
       return await user.save()
     },
 
-    deleteUser: async (parent: any, args: any, context: any) => {
-      if (!context.token) {
-        throw new GraphQLError('Not Authenticated', {
-          extensions: {
-            code: ErrorCode.JWT_TOKEN_MISSING
-          }
-        })
-      }
-      const user = verifyUser(context.token)
-      if (!user) {
-        throw new GraphQLError('User not verified', {
+    deleteUser: async (parent: any, args: any, context: MyContext) => {
+      const { auth } = context
+      if (!auth) {
+        throw new GraphQLError('User not verfied', {
           extensions: {
             code: ErrorCode.NOT_AUTHENTICATED
           }
         })
       }
-
       const { id } = args
 
       const deletedUser = await User.findByIdAndDelete(id)
@@ -164,25 +141,17 @@ const userRresolver = {
       })
 
     },
-    updateAddress: async (parent: any, args: any, context: any) => {
-      if (!context.token) {
-        throw new GraphQLError('Not Authenticated', {
-          extensions: {
-            code: ErrorCode.JWT_TOKEN_MISSING
-          }
-        })
-      }
-
-      const user = verifyUser(context.token)
-      if (!user) {
-        throw new GraphQLError('User not verified', {
+    updateAddress: async (parent: any, args: any, context: MyContext) => {
+      const { auth } = context
+      if (!auth) {
+        throw new GraphQLError('User not verfied', {
           extensions: {
             code: ErrorCode.NOT_AUTHENTICATED
           }
         })
       }
 
-      if (user.role !== UserRole.ADMIN) {
+      if (auth.role !== UserRole.ADMIN) {
         throw new GraphQLError('User not authorized', {
           extensions: {
             code: ErrorCode.WRONG_USER_TYPE
@@ -210,7 +179,7 @@ const userRresolver = {
           }
         })
       }
-      const finduser = await User.findById(user.id)
+      const finduser = await User.findById(auth.id)
       if (!finduser) {
         throw new GraphQLError('User not found', {
           extensions: {
@@ -223,7 +192,7 @@ const userRresolver = {
       }
 
       const updateStatus = await User.updateOne(
-        { _id: user.id },
+        { _id: auth.id },
         {
           $set: {
             address
@@ -238,27 +207,19 @@ const userRresolver = {
       }
 
     },
-    updateAccount: async (parent: any, args: any, context: any) => {
 
+    updateAccount: async (parent: any, args: any, context: MyContext) => {
 
-      if (!context.token) {
-        throw new GraphQLError('Not Authenticated', {
-          extensions: {
-            code: ErrorCode.JWT_TOKEN_MISSING
-          }
-        })
-      }
-
-      const user = verifyUser(context.token)
-      if (!user) {
-        throw new GraphQLError('User not verified', {
+      const { auth } = context
+      if (!auth) {
+        throw new GraphQLError('User not verfied', {
           extensions: {
             code: ErrorCode.NOT_AUTHENTICATED
           }
         })
       }
 
-      if (user.role !== UserRole.ADMIN) {
+      if (auth.role !== UserRole.ADMIN) {
         throw new GraphQLError('User not authorized', {
           extensions: {
             code: ErrorCode.WRONG_USER_TYPE
@@ -284,7 +245,7 @@ const userRresolver = {
           }
         })
       }
-      const finduser = await User.findById(user.id)
+      const finduser = await User.findById(auth.id)
       if (!finduser) {
         throw new GraphQLError('User not found', {
           extensions: {
@@ -294,7 +255,7 @@ const userRresolver = {
       }
 
       const updatedUser = await User.findByIdAndUpdate(
-        user.id,
+        auth.id,
         {
           firstName,
           lastName,

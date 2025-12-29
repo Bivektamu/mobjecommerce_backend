@@ -6,10 +6,10 @@ import User from '../../dataLayer/schema/User';
 import bcrypt from 'bcrypt'
 import { OAuth2Client } from 'google-auth-library'
 import { GraphQLError } from 'graphql';
-import { createJwtTokens } from '../../utilities/tokenGenerator';
+import { createJwtTokens, resetCookies, setCookies } from '../../middleware/auth.middleware';
 const authResolver = {
   Mutation: {
-    logInAdmin: async (_:any, args: LoginInput, context: any) => {
+    logInAdmin: async (_: any, args: LoginInput, context: MyContext) => {
 
       const { email, password } = args.input
 
@@ -20,27 +20,40 @@ const authResolver = {
           }
         })
       }
+      const admin = await User.findOne({email})
+
+      if(!admin) {
+        throw new GraphQLError('Admin not created', {
+          extensions: {
+            code: ErrorCode.USER_NOT_FOUND
+          }
+        })
+      }
+
+      if(admin.role !== UserRole.ADMIN) {
+        throw new GraphQLError('User not authorized', {
+          extensions: {
+            code: ErrorCode.WRONG_USER_TYPE
+          }
+        })
+      }
 
       const payload: CustomJwtPayload = {
         role: UserRole.ADMIN,
-        id: process.env.ADMIN_ID as string
+        id: admin.id
       }
 
-      const signOptions: SignOptions = {
-        expiresIn: '1h'
-      }
-      const secret: string = process.env.JWTSECRET as string
+     const {accessToken, refreshToken} = createJwtTokens(payload)
 
-      const token = sign(
-        payload,
-        secret,
-        signOptions
-      );
+     const {res} = context
+     setCookies(res, accessToken, refreshToken)
+     admin.refreshToken = refreshToken
+     await admin.save()
 
-      return {
-        token
-      }
-
+     return {
+      isLoggedIn: true,
+      user: payload
+     }
     },
 
     logInUser: async (_: any, args: LoginInput, context: MyContext) => {
@@ -99,23 +112,9 @@ const authResolver = {
       user.refreshToken = refreshToken
       await user.save()
 
-      const {res} = context
-      res.cookie('access_token', accessToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-        maxAge: 15 * 60 * 1000,
-        path: '/graphql'
-      })
+      const { res } = context
 
-
-      res.cookie('refresh_token', refreshToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: '/graphql'
-      })
+      setCookies(res, accessToken, refreshToken)
 
       return {
         isLoggedIn: true,
@@ -123,13 +122,14 @@ const authResolver = {
       }
 
     },
-    logInGoogleUser: async (parent: any, args: any, context: any) => {
+    logInGoogleUser: async (parent: any, args: any, context: MyContext) => {
       const { credential } = args
       if (!credential) throw new GraphQLError('Goggle Credential not provided', {
         extensions: {
           code: ErrorCode.GOOGLE_ERROR
         }
       })
+
       const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
       const ticket = await client.verifyIdToken({
         idToken: credential,
@@ -143,15 +143,15 @@ const authResolver = {
         }
       })
       const { email, given_name, family_name, sub } = payload
-      const userExsits = await User.findOne({ email })
+      let user = await User.findOne({ email })
 
       const jwtPayload: CustomJwtPayload = {
         role: UserRole.CUSTOMER,
-        id: userExsits?.id
+        id: user?.id
       }
 
-      if (!userExsits) {
-        const user = new User({
+      if (!user) {
+        user = new User({
           firstName: given_name,
           lastName: family_name,
           email,
@@ -163,34 +163,23 @@ const authResolver = {
         jwtPayload.id = user.id
       }
 
-      const signOptions: SignOptions = {
-        expiresIn: '1h'
-      }
+      const {accessToken, refreshToken} = createJwtTokens(jwtPayload)
 
-      const secret: string = process.env.JWTSECRET as string
+      user.refreshToken = refreshToken
+      await user.save()
 
-      const token = sign(
-        jwtPayload,
-        secret,
-        signOptions
-      )
+      const {res} = context
+      setCookies(res, accessToken, refreshToken)
 
       return {
-        token
+        isLoggedIn: true,
+        user: jwtPayload
       }
-
     },
-    changePassWord: async (parent: any, args: any, context: any) => {
+    changePassWord: async (parent: any, args: any, context: MyContext) => {
 
-      if (!context.token) {
-        throw new GraphQLError('Not Authenticated', {
-          extensions: {
-            code: ErrorCode.JWT_TOKEN_MISSING
-          }
-        })
-      }
-      const verifiedUser = verifyUser(context.token)
-      if (!verifiedUser) {
+      const { auth } = context
+      if (!auth) {
         throw new GraphQLError('User not verified', {
           extensions: {
             code: ErrorCode.NOT_AUTHENTICATED
@@ -199,7 +188,6 @@ const authResolver = {
       }
 
       const { id, currentPassword, newPassword } = args.input
-
 
       const validateSchema: ValidateSchema<any>[] = [
         {
@@ -213,7 +201,7 @@ const authResolver = {
       if (Object.keys(errors).length > 0) {
         throw new GraphQLError('Validation error', {
           extensions: {
-            code: ErrorCode.NOT_AUTHENTICATED,
+            code: ErrorCode.VALIDATION_ERROR,
             extras: errors
           }
         })
@@ -247,29 +235,65 @@ const authResolver = {
       })
 
       return true
-
     },
 
-  },
-  Query: {
-    getAuthStatus: async (context: MyContext) => {
-      const {auth} = context
-      if (!auth) {
-        throw new GraphQLError('Not Authenticated', {
+    logOutUser: async (_: any, args: any, context: MyContext) => {
+      const { res, auth } = context
+      const user = await User.findById(auth?.id)
+      if (user) {
+        user.refreshToken = ''
+        await user.save()
+      }
+      resetCookies(res)
+      return {
+        isLoggedIn: false
+      }
+    },
+    refreshToken: async (_: any, args: any, context: MyContext) => {
+      const { req, res } = context
+      const refresh_token = req.cookies.refresh_token
+      if (!refresh_token) {
+        throw new GraphQLError('Refresh token missing', {
           extensions: {
             code: ErrorCode.JWT_TOKEN_MISSING
           }
         })
       }
-      // const user = verifyUser(context.token)
-      // if (!user) {
-      //   throw new GraphQLError('User not verified', {
-      //     extensions: {
-      //       code: ErrorCode.NOT_AUTHENTICATED
-      //     }
-      //   })
-      // }
-      return { isLoggedIn: true, user: 'user' }
+      const auth = verifyUser(refresh_token, process.env.JWT_REFRESH_TOKEN_SECRET || null)
+      const user = await User.findById(auth.id)
+      if(!user || user.refreshToken !== refresh_token) {
+        resetCookies(res)
+        throw new GraphQLError('Token Revoked', {
+          extensions: {
+            code: ErrorCode.TOKEN_REVOKED
+          }
+        })
+      }
+
+      const payload:CustomJwtPayload = {
+        role: user.role as UserRole,
+        id:user.id
+      }
+      const {accessToken, refreshToken} = createJwtTokens(payload)
+      user.refreshToken = refreshToken
+      await user.save()
+      setCookies(res, accessToken, refreshToken)
+
+      return {
+        isLoggedIn: true,
+        user:payload
+      }
+
+    }
+  },
+  Query: {
+    getAuthStatus: async (_: any, args: any, context: MyContext) => {
+      const { auth } = context
+      if (!auth) return { isLoggedIn: false }
+      return {
+        isLoggedIn: true,
+        user: auth
+      }
     }
   },
 };

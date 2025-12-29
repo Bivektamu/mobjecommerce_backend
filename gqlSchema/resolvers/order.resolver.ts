@@ -1,6 +1,6 @@
 import UserSchem from "../../dataLayer/schema/User"
 import Order from "../../dataLayer/schema/Order"
-import { ErrorCode, OrderedProduct, User, UserRole } from "../../types"
+import { ErrorCode, MyContext, OrderedProduct, User, UserRole } from "../../types"
 import verifyUser from "../../utilities/verifyUser"
 import { GraphQLError } from "graphql"
 import Product from "../../dataLayer/schema/Product"
@@ -8,18 +8,9 @@ import Product from "../../dataLayer/schema/Product"
 
 const orderResolver = {
     Query: {
-        orders: async (parent: any, args: any, context: any) => {
-            if (!context.token) {
-                throw new GraphQLError('Not Authenticated', {
-                    extensions: {
-                        code: ErrorCode.JWT_TOKEN_MISSING
-                    }
-                })
-            }
-
-            const user = verifyUser(context.token)
-
-            if (!user) {
+        orders: async (parent: any, args: any, context: MyContext) => {
+            const { auth } = context
+            if (!auth) {
                 throw new GraphQLError('User not verified', {
                     extensions: {
                         code: ErrorCode.NOT_AUTHENTICATED
@@ -27,7 +18,7 @@ const orderResolver = {
                 })
             }
 
-            if (user.role !== UserRole.ADMIN) {
+            if (auth.role !== UserRole.ADMIN) {
                 throw new GraphQLError('User not authorized', {
                     extensions: {
                         code: ErrorCode.WRONG_USER_TYPE
@@ -44,18 +35,9 @@ const orderResolver = {
             return orders
         },
 
-        userOrders: async (parent: any, args: any, context: any) => {
-            if (!context.token) {
-                throw new GraphQLError('Not Authenticated', {
-                    extensions: {
-                        code: ErrorCode.JWT_TOKEN_MISSING
-                    }
-                })
-            }
-
-            const user = verifyUser(context.token)
-
-            if (!user) {
+        userOrders: async (parent: any, args: any, context: MyContext) => {
+            const { auth } = context
+            if (!auth) {
                 throw new GraphQLError('User not verified', {
                     extensions: {
                         code: ErrorCode.NOT_AUTHENTICATED
@@ -65,7 +47,7 @@ const orderResolver = {
 
             const id = args.id
             const findUser = await UserSchem.findById(id)
-            if (!user) {
+            if (!findUser) {
                 throw new GraphQLError('User not found', {
                     extensions: {
                         code: ErrorCode.USER_NOT_FOUND
@@ -77,24 +59,19 @@ const orderResolver = {
             return orders
         },
 
-        orderByNumber: async (parent: any, args: any, context: any) => {
-            if (!context.token) {
-                throw new GraphQLError('Not Authenticated', {
-                    extensions: {
-                        code: ErrorCode.JWT_TOKEN_MISSING
-                    }
-                })
-            }
-
-            const user = verifyUser(context.token)
-
-            if (!user) {
+        orderByNumber: async (parent: any, args: any, context: MyContext) => {
+            const { auth } = context
+            if (!auth) {
                 throw new GraphQLError('User not verified', {
                     extensions: {
                         code: ErrorCode.NOT_AUTHENTICATED
                     }
                 })
             }
+
+
+
+
 
             const orderNumber = args.orderNumber
             if (!orderNumber) {
@@ -117,17 +94,9 @@ const orderResolver = {
         },
     },
     Mutation: {
-        createOrder: async (parent: any, args: any, context: any) => {
-            if (!context.token) {
-                throw new GraphQLError('Not Authenticated', {
-                    extensions: {
-                        code: ErrorCode.JWT_TOKEN_MISSING
-                    }
-                })
-            }
-
-            const user = verifyUser(context.token)
-            if (!user) {
+        createOrder: async (parent: any, args: any, context: MyContext) => {
+            const { auth } = context
+            if (!auth) {
                 throw new GraphQLError('User not verified', {
                     extensions: {
                         code: ErrorCode.NOT_AUTHENTICATED
@@ -135,7 +104,8 @@ const orderResolver = {
                 })
             }
 
-            if (user.role !== UserRole.CUSTOMER) {
+
+            if (auth.role !== UserRole.CUSTOMER) {
                 throw new GraphQLError('User not authorized', {
                     extensions: {
                         code: ErrorCode.WRONG_USER_TYPE
@@ -191,18 +161,10 @@ const orderResolver = {
             await newOrder.save()
             return newOrder.orderNumber
         },
-        updateOrderStatus: async (parent: any, args: any, context: any) => {
+        updateOrderStatus: async (parent: any, args: any, context: MyContext) => {
 
-            if (!context.token) {
-                throw new GraphQLError('Not Authenticated', {
-                    extensions: {
-                        code: ErrorCode.JWT_TOKEN_MISSING
-                    }
-                })
-            }
-
-            const user = verifyUser(context.token)
-            if (!user) {
+            const { auth } = context
+            if (!auth) {
                 throw new GraphQLError('User not verified', {
                     extensions: {
                         code: ErrorCode.NOT_AUTHENTICATED
@@ -210,7 +172,7 @@ const orderResolver = {
                 })
             }
 
-            if (user.role !== UserRole.ADMIN) {
+            if (auth.role !== UserRole.ADMIN) {
                 throw new GraphQLError('User not authorized', {
                     extensions: {
                         code: ErrorCode.WRONG_USER_TYPE
@@ -219,7 +181,6 @@ const orderResolver = {
             }
 
             const { id, status } = args.input
-
 
             const updateState = await Order.updateOne(
                 { _id: id },

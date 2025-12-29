@@ -3,11 +3,8 @@ import { CustomJwtPayload, ErrorCode, User, UserRole, verifiedUser } from "../ty
 import { JsonWebTokenError, TokenExpiredError, verify } from "jsonwebtoken"
 
 
-const verifyUser = (token: string) => {
-
-    const JWT_SECRET = process.env.JWTSECRET // because in serverless environment this variable is gurranted to run and be available at runtime but not sure in build time
-
-    if (!JWT_SECRET) {
+const verifyUser = (token: string, secret:string|null) => {
+    if (!secret) {
         throw new GraphQLError('Jwt Secret not defined', {
             extensions: {
                 code: ErrorCode.JWT_TOKEN_MISSING
@@ -15,7 +12,7 @@ const verifyUser = (token: string) => {
         })
     }
     try {
-        const verifiedUser: CustomJwtPayload = verify(token, JWT_SECRET) as CustomJwtPayload
+        const verifiedUser: CustomJwtPayload = verify(token, secret) as CustomJwtPayload
 
         const user: verifiedUser = {
             role: verifiedUser.role,
