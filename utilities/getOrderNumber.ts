@@ -14,7 +14,7 @@ const getOrderNumber = async () => {
         }
     )
     const year = new Date().getFullYear()
-    return `MBJ-${year}-${String(nextSequence).padStart(6, '0')}`
+    return `MBJ-${year}-${String(nextSequence.seq).padStart(6, '0')}`
 } 
 
 export default getOrderNumber

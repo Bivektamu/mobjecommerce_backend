@@ -30,7 +30,7 @@ export const AddressSchema = new Schema({
         type: String,
         required: true,
     },
-    default: {
+    setAsDefault: {
         type: Boolean,
         required: true,
         default: false

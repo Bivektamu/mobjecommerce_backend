@@ -1,5 +1,5 @@
 import User from "../../dataLayer/schema/User";
-import { Address, ErrorCode, FormError, MyContext, UserRole, ValidateSchema } from "../../types";
+import { Address, AddressInput, ErrorCode, FormError, MyContext, UserRole, ValidateSchema } from "../../types";
 import validateForm from "../../utilities/validateForm";
 import bcrypt from 'bcrypt'
 import verifyUser from "../../utilities/verifyUser";
@@ -41,6 +41,28 @@ const userRresolver = {
 
       const findUser = await User.findById(id)
       return findUser
+    },
+    userAddresses: async (parent: any, args: any, context: MyContext) => {
+
+      const { auth } = context
+      if (!auth) {
+        throw new GraphQLError('User not verfied', {
+          extensions: {
+            code: ErrorCode.NOT_AUTHENTICATED
+          }
+        })
+      }
+      const id = auth.id
+
+      const user = await User.findById(id)
+      if (!user) {
+        throw new GraphQLError('User not found', {
+          extensions: {
+            code: ErrorCode.USER_NOT_FOUND
+          }
+        })
+      }
+      return user.address
     },
     userEmail: async (parent: any, args: any) => {
       const id = args.id
@@ -141,7 +163,7 @@ const userRresolver = {
       })
 
     },
-    updateAddress: async (parent: any, args: any, context: MyContext) => {
+    updateAddressById: async (parent: any, args: AddressInput, context: MyContext) => {
       const { auth } = context
       if (!auth) {
         throw new GraphQLError('User not verfied', {
@@ -151,7 +173,7 @@ const userRresolver = {
         })
       }
 
-      if (auth.role !== UserRole.ADMIN) {
+      if (auth.role !== UserRole.CUSTOMER) {
         throw new GraphQLError('User not authorized', {
           extensions: {
             code: ErrorCode.WRONG_USER_TYPE
@@ -159,7 +181,16 @@ const userRresolver = {
         })
       }
 
-      const {label, street, city, state, postcode, country } = args.input
+      const user = await User.findById(auth.id)
+      if (!user) {
+        throw new GraphQLError('User not found', {
+          extensions: {
+            code: ErrorCode.USER_NOT_FOUND
+          }
+        })
+      }
+
+      const { label, street, city, state, postcode, country, building, setAsDefault, id } = args.input
 
       const validateSchema: ValidateSchema<any>[] = [
         { value: label, name: 'label', type: 'string' },
@@ -173,40 +204,37 @@ const userRresolver = {
       const errors: FormError = validateForm(validateSchema)
 
       if (Object.keys(errors).length > 0) {
-        throw new GraphQLError('Login fields error', {
+        throw new GraphQLError('Form Validation error', {
           extensions: {
             code: ErrorCode.VALIDATION_ERROR,
             extra: errors
           }
         })
       }
-      const finduser = await User.findById(auth.id)
-      if (!finduser) {
-        throw new GraphQLError('User not found', {
-          extensions: {
-            code: ErrorCode.USER_NOT_FOUND
-          }
-        })
-      }
+
       const address: Address = {
-        label, street, city, state, country, postcode
+        label, street, city, state, country, postcode, setAsDefault
       }
 
-      const updateStatus = await User.updateOne(
-        { _id: auth.id },
-        {
-          $set: {
-            address
-          }
+      if (building) address.building = building
 
-        }
-      )
-
-      const { acknowledged, modifiedCount } = updateStatus
-      if (acknowledged && modifiedCount === 1) {
-        return address
+      if (id) {
+        await User.findOneAndUpdate(
+          {_id: user.id, "address._id": id}, // Find user by id and specific address by id
+          {
+            $set: {
+              "address.$": { ...address, _id: id } // $ is the positional operator. It acts as placeholder for first element in the address array that matches the condition, which is completely replaced by new address details
+            }
+          },
+        )
+      }
+      else {
+        await User.findByIdAndUpdate(user.id, 
+          {$push: {address: address}}
+        )
       }
 
+      return true
     },
 
     updateAccount: async (parent: any, args: any, context: MyContext) => {

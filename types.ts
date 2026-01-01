@@ -3,13 +3,17 @@ import mongoose, { Document, ObjectId } from "mongoose"
 import { Request, Response } from 'express'
 
 export type Address = {
-    label:String,
+    label: String,
     street: String,
     building?: String,
     city: String,
     state: String,
     postcode: String,
     country: String,
+    setAsDefault: boolean
+}
+export interface AddressInput {
+    input: Address & { id?: String }
 }
 
 export enum UserRole {
@@ -105,7 +109,7 @@ export enum ErrorCode {
 }
 
 export enum OrderStatus {
-    CREATED="CREATED",
+    CREATED = "CREATED",
     PENDING = "PENDING",
     PAID = "PAID",
     COMPLETED = "COMPLETED",
@@ -140,7 +144,7 @@ export type OrderItemsCategoryCounter = {
 }
 
 
-export interface OrderItem  {
+export interface OrderItem {
     productId: mongoose.Types.ObjectId,
     color: Color,
     quantity: number,

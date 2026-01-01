@@ -20,7 +20,7 @@ const paymentTypeDef = gql`
     }
 
   type Mutation {
-        createPaymentIntent(items: [CartItemInput!]!): CreatePaymentIntentResponse!
+        createPaymentIntent(input: CreateOrderInput!): CreatePaymentIntentResponse!
     }
 `
 

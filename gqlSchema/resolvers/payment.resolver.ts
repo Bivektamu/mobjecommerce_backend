@@ -85,10 +85,12 @@ const paymentResolvers = {
                 email:user.email
             }
 
+            const orderNumber = await getOrderNumber()
+
             const order = await Order.create({
                 userId: auth.id,
                 customer: customer,
-                orderNumber: getOrderNumber(),
+                orderNumber: orderNumber,
                 subTotal,
                 status: OrderStatus.PENDING,
                 tax,
@@ -115,14 +117,10 @@ const paymentResolvers = {
             order.stripePaymentIntentId = paymentIntent.id
             await order.save()
 
-            console.log(paymentIntent)
-
             return {
                 clientSecret: paymentIntent.client_secret,
                 orderId: order.id
             }
-
-
         }
     }
 }

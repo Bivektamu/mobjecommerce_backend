@@ -3,6 +3,7 @@ import gql from "graphql-tag";
 const UserTypeDef = gql`
 
 type Address {
+    id:ID!,
     label: String!,
     street: String!,
     building: String,
@@ -10,6 +11,7 @@ type Address {
     postcode: String!,
     state: String!,
     country: String!,
+    setAsDefault:Boolean!
 }
 
 enum UserRole {
@@ -40,6 +42,7 @@ input UserInput {
 }
 
 input AddressInput {
+    id:ID,
     label: String!,
     street: String!,
     building: String,
@@ -47,6 +50,7 @@ input AddressInput {
     postcode: String!,
     state: String!,
     country: String!,
+    setAsDefault:Boolean!
 }
 
 input UpdateAccount {
@@ -58,6 +62,7 @@ input UpdateAccount {
 type Query {
     users: [User],
     user(id:ID): User,
+    userAddresses:[Address]
     userEmail(id:ID): String,
     publicUserDetails(id:ID): PublicUserDetails
 }
@@ -65,7 +70,7 @@ type Query {
 type Mutation {
     createUser(input:UserInput): User,
     deleteUser(id: ID): ReturnType,
-    updateAddress(input: AddressInput): Address,
+    updateAddressById(input: AddressInput):Boolean,
     updateAccount(input: UpdateAccount): User
 }
 `

@@ -126,7 +126,7 @@ const OrderSchema = new Schema({
         required: true,
     },
 
-    billindAddress: {
+    billingAddress: {
         type: AddressSchema,
         required: true,
     },

@@ -7,6 +7,8 @@ import {graphqlUploadExpress} from "graphql-upload-ts";
 import cors from 'cors'
 import {Request, Response} from 'express'
 import http from 'http';
+import 'dotenv/config'
+
 
 import resolvers from '../gqlSchema/resolvers/index.resolver';
 
@@ -35,6 +37,7 @@ interface Context {
 const server = new ApolloServer<Context>({
   typeDefs,
   resolvers,
+  introspection: true,
   csrfPrevention: true,
   plugins: [
     ApolloServerPluginDrainHttpServer({ httpServer }),
@@ -42,7 +45,6 @@ const server = new ApolloServer<Context>({
       embed:true
     })
   ],
-  introspection: true,
 });
 
 async function startServer() {
