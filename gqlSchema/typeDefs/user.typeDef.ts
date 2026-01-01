@@ -3,19 +3,19 @@ import gql from "graphql-tag";
 const UserTypeDef = gql`
 
 type Address {
-    street: String,
-    city: String,
-    postcode: String,
-    state: String,
-    country: String,
+    label: String!,
+    street: String!,
+    building: String,
+    city: String!,
+    postcode: String!,
+    state: String!,
+    country: String!,
 }
-
 
 enum UserRole {
     admin,
     customer
 }
-
 
 type User {
     id: ID!,
@@ -40,7 +40,9 @@ input UserInput {
 }
 
 input AddressInput {
+    label: String!,
     street: String!,
+    building: String,
     city: String!,
     postcode: String!,
     state: String!,

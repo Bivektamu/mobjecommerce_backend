@@ -1,6 +1,6 @@
 import UserSchem from "../../dataLayer/schema/User"
 import Order from "../../dataLayer/schema/Order"
-import { ErrorCode, MyContext, OrderedProduct, User, UserRole } from "../../types"
+import { ErrorCode, MyContext, OrderItem, User, UserRole } from "../../types"
 import verifyUser from "../../utilities/verifyUser"
 import { GraphQLError } from "graphql"
 import Product from "../../dataLayer/schema/Product"
@@ -94,73 +94,7 @@ const orderResolver = {
         },
     },
     Mutation: {
-        createOrder: async (parent: any, args: any, context: MyContext) => {
-            const { auth } = context
-            if (!auth) {
-                throw new GraphQLError('User not verified', {
-                    extensions: {
-                        code: ErrorCode.NOT_AUTHENTICATED
-                    }
-                })
-            }
-
-
-            if (auth.role !== UserRole.CUSTOMER) {
-                throw new GraphQLError('User not authorized', {
-                    extensions: {
-                        code: ErrorCode.WRONG_USER_TYPE
-                    }
-                })
-            }
-
-            const {
-                userId,
-                status,
-                total,
-                subTotal,
-                tax,
-                items,
-                shippingAddress,
-            } = args.input
-
-            items.map(async (item: OrderedProduct) => {
-                const { productId, quantity } = item
-                const product = await Product.findById(productId).select('quantity -_id').lean()
-
-                if (product) {
-                    if (quantity > product.quantity) {
-                        throw new GraphQLError('Ordered quantity exceeds stock quantity', {
-                            extensions: {
-                                code: ErrorCode.INPUT_ERROR
-                            }
-                        })
-                    }
-                    await Product.updateOne(
-                        {
-                            _id: productId,
-                        },
-                        {
-                            $set: {
-                                quantity: product.quantity - quantity
-                            }
-                        })
-                }
-            })
-
-            const newOrder = new Order({
-                orderNumber: Date.now() + Math.floor((Math.random() * 1000)),
-                userId,
-                status,
-                total,
-                subTotal,
-                tax,
-                items,
-                shippingAddress,
-            })
-
-            await newOrder.save()
-            return newOrder.orderNumber
-        },
+     
         updateOrderStatus: async (parent: any, args: any, context: MyContext) => {
 
             const { auth } = context

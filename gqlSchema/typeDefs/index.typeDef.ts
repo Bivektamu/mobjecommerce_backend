@@ -6,6 +6,7 @@ import productTypeDef from "./product.typeDef";
 import reviewTypeDef from "./review.typeDef";
 import wishListTypeDef from "./wishList.typeDef";
 import analyticsTypeDef from "./analytics.typeDef";
+import paymentTypeDef from "./payment.typeDef";
 
 export default [
     globalTypeDef,
@@ -15,5 +16,6 @@ export default [
     reviewTypeDef,
     orderTypeDef,
     wishListTypeDef,
-    analyticsTypeDef
+    analyticsTypeDef,
+    paymentTypeDef
 ]

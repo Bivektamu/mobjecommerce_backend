@@ -1,4 +1,78 @@
 import mongoose, { Schema } from "mongoose";
+import { Color, OrderStatus, Size } from "../../types";
+import { AddressSchema } from "./User";
+
+
+const OrderItemSchema = new Schema({
+    productId: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: 'Product'
+    },
+    color: {
+        type: String,
+        enum: Object.values(Color),
+        required: true
+    },
+    quantity: {
+        type: Number,
+        required: true,
+    },
+    size: {
+        type: String,
+        enum: Object.values(Size),
+        required: true
+    },
+    unitPrice: {
+        type: Number,
+        required: true,
+    },
+},
+
+    {
+        _id: false
+    }
+)
+
+const RefundSchema = new Schema({
+    refundId: {
+        type: String,
+        required: true
+    },
+    amount: {
+        type: Number,
+        required: true
+    },
+    createdAd: {
+        type: Date,
+        default: Date.now
+    },
+},
+
+    {
+        _id: false
+    }
+)
+
+const CustomerSchema = new Schema({
+    email: {
+        type: String,
+        required: true,
+    },
+    firstName: {
+        type: String,
+        required: true,
+    },
+    lastName: {
+        type: String,
+        required: true,
+    },
+},
+    {
+        _id: false
+    }
+
+)
 
 const OrderSchema = new Schema({
     orderNumber: {
@@ -10,17 +84,27 @@ const OrderSchema = new Schema({
         required: true,
         ref: 'User'
     },
+    customer: {
+        type: CustomerSchema,
+        required: true
+    },
     status: {
         type: String,
-        enum: ['PENDING', 'COMPLETED', 'PROCESSING', 'CANCELLED', 'FAILED', 'SHIPPED', 'REFUNDED'],
+        enum: Object.values(OrderStatus),
         required: true,
+        default: OrderStatus.CREATED
     },
-    
+    currency: {
+        type: String,
+        required: true,
+        default: 'AUD'
+    },
     subTotal: {
         type: Number,
         required: true,
     },
-    
+    stripePaymentIntentId: String,
+    // stripeCustomerId: String,
     tax: {
         type: Number,
         required: true,
@@ -29,61 +113,26 @@ const OrderSchema = new Schema({
         type: Number,
         required: true,
     },
-
-    items: [{
-        productId: {
-            type: Schema.Types.ObjectId,
-            required: true,
-            ref: 'Product'
-        },
-        color: {
-            type: String,
-            enum: ['BLACK', 'RED', 'GRAY', 'WHITE', 'AMBER'],
-            required: true
-        },
-        quantity: {
-            type: Number,
-            required: true,
-        },
-        size: {
-            type: String,
-            enum: ['S', 'M', 'L', 'XL'],
-            required: true
-        },
-        price: {
-            type: Number,
-            required: true,
-        },
-        imgUrl: {
-            type: String,
-            required: true
-        }
-    }]
-    ,
+    items: {
+        type: [OrderItemSchema],
+        required: true,
+    },
+    refunds: {
+        type: [RefundSchema],
+        default: []
+    },
     shippingAddress: {
-        street: {
-            type: String,
-        },
-        city: {
-            type: String,
-        },
-        state: {
-            type: String,
-        },
-        postcode: {
-            type: String,
-        },
-        country: {
-            type: String,
-        },
-    },
-    orderPlaced: {
-        type: Date,
-        default: Date.now
+        type: AddressSchema,
+        required: true,
     },
 
-
-})
+    billindAddress: {
+        type: AddressSchema,
+        required: true,
+    },
+},
+    { timestamps: true }
+)
 
 const Order = mongoose.model('Order', OrderSchema)
 export default Order

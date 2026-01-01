@@ -26,7 +26,8 @@
     "graphql-tag": "^2.12.6",
     "graphql-upload-ts": "^2.1.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.3.5"
+    "mongoose": "^8.3.5",
+    "stripe": "^20.1.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

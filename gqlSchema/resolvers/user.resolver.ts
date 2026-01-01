@@ -159,9 +159,10 @@ const userRresolver = {
         })
       }
 
-      const { street, city, state, postcode, country } = args.input
+      const {label, street, city, state, postcode, country } = args.input
 
       const validateSchema: ValidateSchema<any>[] = [
+        { value: label, name: 'label', type: 'string' },
         { value: street, name: 'street', type: 'string' },
         { value: city, name: 'city', type: 'string' },
         { value: state, name: 'state', type: 'string' },
@@ -188,7 +189,7 @@ const userRresolver = {
         })
       }
       const address: Address = {
-        street, city, state, country, postcode
+        label, street, city, state, country, postcode
       }
 
       const updateStatus = await User.updateOne(

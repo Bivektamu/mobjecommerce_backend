@@ -1,9 +1,11 @@
 import { JwtPayload } from "jsonwebtoken"
-import mongoose, { ObjectId } from "mongoose"
+import mongoose, { Document, ObjectId } from "mongoose"
 import { Request, Response } from 'express'
 
 export type Address = {
+    label:String,
     street: String,
+    building?: String,
     city: String,
     state: String,
     postcode: String,
@@ -103,7 +105,9 @@ export enum ErrorCode {
 }
 
 export enum OrderStatus {
+    CREATED="CREATED",
     PENDING = "PENDING",
+    PAID = "PAID",
     COMPLETED = "COMPLETED",
     PROCESSING = "PROCESSING",
     CANCELLED = "CANCELLED",
@@ -111,7 +115,6 @@ export enum OrderStatus {
     SHIPPED = "SHIPPED",
     REFUNDED = "REFUNDED",
 }
-
 
 
 export interface OrderItemPopulated {
@@ -136,6 +139,15 @@ export type OrderItemsCategoryCounter = {
     count: number
 }
 
+
+export interface OrderItem  {
+    productId: mongoose.Types.ObjectId,
+    color: Color,
+    quantity: number,
+    size: Size,
+    unitPrice: number,
+}
+
 export enum Color {
     BLACK = 'BLACK',
     RED = 'RED',
@@ -149,11 +161,6 @@ export enum Size {
     L = 'L',
     XL = 'XL'
 }
-export type OrderedProduct = {
-    productId: string,
-    color: Color,
-    quantity: number,
-    size: Size,
-    price: number,
-    imgUrl: string
-}
+
+
+

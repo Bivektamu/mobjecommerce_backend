@@ -63,7 +63,6 @@ enum Status {
     }
     
     type Mutation {
-        createOrder(input: OrderInput): String
         updateOrderStatus(input: OrderStatus):Status
     }
 `

@@ -1,6 +1,43 @@
 import mongoose, { Schema } from "mongoose";
 import { User } from "../../types";
 
+export const AddressSchema = new Schema({
+    label: {
+        type: String,
+        required: true,
+        default: 'home'
+    },
+    street: {
+        type: String,
+        required: true,
+    },
+    building: {
+        type: String
+    },
+    city: {
+        type: String,
+        required: true,
+    },
+    state: {
+        type: String,
+        required: true,
+    },
+    postcode: {
+        type: String,
+        required: true,
+    },
+    country: {
+        type: String,
+        required: true,
+    },
+    default: {
+        type: Boolean,
+        required: true,
+        default: false
+    }
+},
+)
+
 const UserSchema = new Schema({
     firstName: {
         type: String,
@@ -13,12 +50,12 @@ const UserSchema = new Schema({
     email: {
         type: String,
         required: true,
-        unique:true,
+        unique: true,
     },
 
     password: {
         type: String,
-        required: function(this:User) {return !this.googleId},
+        required: function (this: User) { return !this.googleId },
     },
     googleId: {
         type: String,
@@ -36,21 +73,7 @@ const UserSchema = new Schema({
         default: Date.now
     },
     address: {
-        street: {
-            type: String,
-        },
-        city: {
-            type: String,
-        },
-        state: {
-            type: String,
-        },
-        postcode: {
-            type: String,
-        },
-        country: {
-            type: String,
-        },
+        type: [AddressSchema]
     },
     refreshToken: {
         type: String

@@ -261,7 +261,7 @@ const authResolver = {
           }
         })
       }
-      const auth = verifyUser(refresh_token, process.env.JWT_REFRESH_TOKEN_SECRET || null)
+      const auth = verifyUser(refresh_token, process.env.JWT_REFRESH_TOKEN_SECRET!)
       const user = await User.findById(auth.id)
       if (!user || user.refreshToken !== refresh_token) {
         resetCookies(res)

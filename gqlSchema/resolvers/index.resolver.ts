@@ -9,6 +9,7 @@ import wishListResolver from './wishList.resolver';
 import reviewResolver from './review.resolver';
 import { GraphQLScalarType, Kind } from "graphql"
 import analyticsResolver from './analytics.resolver';
+import paymentResolvers from './payment.resolver';
 
 
 const DateScalar = new GraphQLScalarType({
@@ -44,5 +45,6 @@ export default [
     orderResolver,
     wishListResolver,
     reviewResolver,
-    analyticsResolver
+    analyticsResolver,
+    paymentResolvers
 ]

@@ -1,6 +1,7 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
+import {ApolloServerPluginLandingPageLocalDefault} from '@apollo/server/plugin/landingPage/default'
 import express from 'express'
 import {graphqlUploadExpress} from "graphql-upload-ts";
 import cors from 'cors'
@@ -35,7 +36,12 @@ const server = new ApolloServer<Context>({
   typeDefs,
   resolvers,
   csrfPrevention: true,
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  plugins: [
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+    ApolloServerPluginLandingPageLocalDefault({
+      embed:true
+    })
+  ],
   introspection: true,
 });
 

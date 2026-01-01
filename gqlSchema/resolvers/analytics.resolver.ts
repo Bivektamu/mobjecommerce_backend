@@ -13,8 +13,9 @@ const analyticsResolver = {
         salesAnalytics: async (parent: any, args: any, context: MyContext) => {
 
             const { auth } = context
+            console.log(auth)
             if (!auth) {
-                throw new GraphQLError('User not verified', {
+                throw new GraphQLError('User not authenticated', {
                     extensions: {
                         code: ErrorCode.NOT_AUTHENTICATED
                     }
@@ -30,7 +31,7 @@ const analyticsResolver = {
             }
 
             const currentMonthOrders = await Order.find({
-                orderPlaced: {
+                createdAt: {
                     $gte: currentStartDate,
                     $lte: currentEndDate
                 },
@@ -39,7 +40,7 @@ const analyticsResolver = {
 
 
             const lastMonthOrders = await Order.find({
-                orderPlaced: {
+                createdAt: {
                     $gte: pastStartDate,
                     $lte: pastEndDate
                 },
@@ -73,7 +74,7 @@ const analyticsResolver = {
 
             const { auth } = context
             if (!auth) {
-                throw new GraphQLError('User not verified', {
+                throw new GraphQLError('User not authenticated', {
                     extensions: {
                         code: ErrorCode.NOT_AUTHENTICATED
                     }
@@ -89,7 +90,7 @@ const analyticsResolver = {
             }
 
             const currentMonthOrders = (await Order.find({
-                orderPlaced: {
+                createdAt: {
                     $gte: currentStartDate,
                     $lte: currentEndDate
                 },
@@ -97,7 +98,7 @@ const analyticsResolver = {
             }).select('_id').lean()).length
 
             const previousMonthOrders = (await Order.find({
-                orderPlaced: {
+                createdAt: {
                     $gte: pastStartDate,
                     $lte: pastEndDate
                 },
@@ -130,7 +131,7 @@ const analyticsResolver = {
 
             const { auth } = context
             if (!auth) {
-                throw new GraphQLError('User not verified', {
+                throw new GraphQLError('User not authenticated', {
                     extensions: {
                         code: ErrorCode.NOT_AUTHENTICATED
                     }
@@ -146,7 +147,7 @@ const analyticsResolver = {
             }
 
             const currentMonthActiveUsers = (await Order.find({
-                orderPlaced: {
+                createdAt: {
                     $gte: currentStartDate,
                     $lte: currentEndDate
                 },
@@ -157,7 +158,7 @@ const analyticsResolver = {
 
 
             const previousMonthActiveUsers = (await Order.find({
-                orderPlaced: {
+                createdAt: {
                     $gte: pastStartDate,
                     $lte: pastEndDate
                 },
@@ -190,7 +191,7 @@ const analyticsResolver = {
 
             const { auth } = context
             if (!auth) {
-                throw new GraphQLError('User not verified', {
+                throw new GraphQLError('User not authenticated', {
                     extensions: {
                         code: ErrorCode.NOT_AUTHENTICATED
                     }
@@ -206,19 +207,19 @@ const analyticsResolver = {
             }
 
             const monthlySales = await Order.find({
-                orderPlaced: {
+                createdAt: {
                     $gte: currentStartDate,
                     $lte: currentEndDate
                 },
                 status: OrderStatus.COMPLETED
             })
-                .select('total orderPlaced -_id')
-                .sort({ orderPlaced: 1 })
+                .select('total createdAt -_id')
+                .sort({ createdAt: 1 })
                 .lean()
 
             if (monthlySales.length > 0) {
-                const groupedBySales = monthlySales.reduce((acc: unknownShape, { total, orderPlaced }) => {
-                    const tempDate = (new Date(orderPlaced).toISOString().split('T')[0])
+                const groupedBySales = monthlySales.reduce((acc: unknownShape, { total, createdAt }) => {
+                    const tempDate = (new Date(createdAt).toISOString().split('T')[0])
                     if (!acc[tempDate]) {
                         acc[tempDate] = 0
                     }
@@ -238,7 +239,7 @@ const analyticsResolver = {
 
             const { auth } = context
             if (!auth) {
-                throw new GraphQLError('User not verified', {
+                throw new GraphQLError('User not authenticated', {
                     extensions: {
                         code: ErrorCode.NOT_AUTHENTICATED
                     }
@@ -273,7 +274,7 @@ const analyticsResolver = {
 
             const { auth } = context
             if (!auth) {
-                throw new GraphQLError('User not verified', {
+                throw new GraphQLError('User not authenticated', {
                     extensions: {
                         code: ErrorCode.NOT_AUTHENTICATED
                     }
@@ -288,7 +289,7 @@ const analyticsResolver = {
                 })
             }
             const monthlyOrders = await Order.find({
-                orderPlaced: {
+                createdAt: {
                     $gte: currentStartDate,
                     $lte: currentEndDate
                 },
