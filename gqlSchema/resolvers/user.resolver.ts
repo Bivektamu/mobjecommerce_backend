@@ -1,5 +1,5 @@
 import User from "../../dataLayer/schema/User";
-import { Address, AddressInput, ErrorCode, FormError, MyContext, UserRole, ValidateSchema } from "../../types";
+import { Address, AddressInput, ErrorCode, FormError, InputId, MyContext, UserRole, ValidateSchema } from "../../types";
 import validateForm from "../../utilities/validateForm";
 import bcrypt from 'bcrypt'
 import verifyUser from "../../utilities/verifyUser";
@@ -27,7 +27,7 @@ const userRresolver = {
       const users = await User.find()
       return users
     },
-    user: async (parent: any, args: any, context: MyContext) => {
+    user: async (parent: any, args: InputId, context: MyContext) => {
 
       const { auth } = context
       if (!auth) {
@@ -40,8 +40,16 @@ const userRresolver = {
       const id = args.id
 
       const findUser = await User.findById(id)
+      if(!findUser) {
+         throw new GraphQLError('User not found', {
+          extensions: {
+            code: ErrorCode.USER_NOT_FOUND
+          }
+        })
+      }
       return findUser
     },
+
     userAddresses: async (parent: any, args: any, context: MyContext) => {
 
       const { auth } = context
@@ -64,33 +72,47 @@ const userRresolver = {
       }
       return user.address
     },
+    userAddress: async (parent: any, args: InputId, context: MyContext) => {
+      const { auth } = context
+      if (!auth) {
+        throw new GraphQLError('User not verfied', {
+          extensions: {
+            code: ErrorCode.NOT_AUTHENTICATED
+          }
+        })
+      }
+      const user = await User.findById(auth.id)
+      if (!user) {
+        throw new GraphQLError('User not found', {
+          extensions: {
+            code: ErrorCode.USER_NOT_FOUND
+          }
+        })
+      }
+
+
+      const address = user.address.filter(item => item.id === args.id)
+
+      if (address.length < 1) {
+        throw new GraphQLError('Address not found', {
+          extensions: {
+            code: ErrorCode.NOT_FOUND
+          }
+        })
+      }
+      return address[0]
+    },
     userEmail: async (parent: any, args: any) => {
       const id = args.id
-      const finduser = await User.findById(id)
-      if (!finduser) {
+      const user = await User.findById(id)
+      if (!user) {
         throw new GraphQLError('User not found', {
           extensions: {
             code: ErrorCode.USER_NOT_FOUND
           }
         })
       }
-      return finduser.email
-    },
-    publicUserDetails: async (parent: any, args: any) => {
-      const id = args.id
-      const finduser = await User.findById(id)
-      if (!finduser) {
-        throw new GraphQLError('User not found', {
-          extensions: {
-            code: ErrorCode.USER_NOT_FOUND
-          }
-        })
-      }
-      const user = {
-        firstName: finduser.firstName,
-        lastName: finduser.lastName,
-      }
-      return user
+      return user.email
     },
 
   },
@@ -173,13 +195,6 @@ const userRresolver = {
         })
       }
 
-      if (auth.role !== UserRole.CUSTOMER) {
-        throw new GraphQLError('User not authorized', {
-          extensions: {
-            code: ErrorCode.WRONG_USER_TYPE
-          }
-        })
-      }
 
       const user = await User.findById(auth.id)
       if (!user) {
@@ -218,9 +233,17 @@ const userRresolver = {
 
       if (building) address.building = building
 
+      if (setAsDefault && user.address.length > 0) {
+        user.set('address', user.address.map(item => ({
+          ...item,
+          setAsDefault: false
+        })))
+        await user.save()
+      }
+
       if (id) {
         await User.findOneAndUpdate(
-          {_id: user.id, "address._id": id}, // Find user by id and specific address by id
+          { _id: user.id, "address._id": id }, // Find user by id and specific address by id
           {
             $set: {
               "address.$": { ...address, _id: id } // $ is the positional operator. It acts as placeholder for first element in the address array that matches the condition, which is completely replaced by new address details
@@ -229,11 +252,46 @@ const userRresolver = {
         )
       }
       else {
-        await User.findByIdAndUpdate(user.id, 
-          {$push: {address: address}}
+        await User.findByIdAndUpdate(user.id,
+          { $push: { address: address } }
         )
       }
 
+      return true
+    },
+
+    deleteAddress: async (parent: any, args: InputId, context: MyContext) => {
+      const { auth } = context
+      if (!auth) {
+        throw new GraphQLError('User not verfied', {
+          extensions: {
+            code: ErrorCode.NOT_AUTHENTICATED
+          }
+        })
+      }
+
+
+      const user = await User.findById(auth.id)
+      if (!user) {
+        throw new GraphQLError('User not found', {
+          extensions: {
+            code: ErrorCode.USER_NOT_FOUND
+          }
+        })
+      }
+
+      if (!args.id) {
+        throw new GraphQLError('Address Id not provided', {
+          extensions: {
+            code: ErrorCode.INPUT_ERROR,
+          }
+        })
+      }
+
+      await User.findByIdAndUpdate(
+        user.id,
+        { $pull: { address: { _id: args.id } } },
+      )
       return true
     },
 

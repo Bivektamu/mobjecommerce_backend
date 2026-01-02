@@ -29,10 +29,6 @@ type User {
     registeredDate: Date
 }
 
-type PublicUserDetails {
-firstName: String!,
-    lastName: String!,
-}
 
 input UserInput {
     firstName: String!,
@@ -62,16 +58,18 @@ input UpdateAccount {
 type Query {
     users: [User],
     user(id:ID): User,
-    userAddresses:[Address]
+    userAddresses:[Address],
+    userAddress(id:ID): Address,
     userEmail(id:ID): String,
-    publicUserDetails(id:ID): PublicUserDetails
 }
 
 type Mutation {
     createUser(input:UserInput): User,
     deleteUser(id: ID): ReturnType,
     updateAddressById(input: AddressInput):Boolean,
-    updateAccount(input: UpdateAccount): User
+    updateAccount(input: UpdateAccount): User,
+    deleteAddress(id:ID): Boolean,
+
 }
 `
 

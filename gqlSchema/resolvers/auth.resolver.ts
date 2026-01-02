@@ -1,4 +1,4 @@
-import { SignOptions, sign } from 'jsonwebtoken'
+import 'dotenv/config'
 import verifyUser from '../../utilities/verifyUser';
 import { CustomJwtPayload, ErrorCode, FormError, LoginInput, MyContext, UserRole, ValidateSchema } from '../../types';
 import validateForm from '../../utilities/validateForm';
@@ -13,7 +13,7 @@ const authResolver = {
 
       const { email, password } = args.input
 
-      if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
+      if (email !== process.env.ADMIN_EMAIL! || password !== process.env.ADMIN_PASSWORD!) {
         throw new GraphQLError('Invalid Credentials', {
           extensions: {
             code: ErrorCode.BAD_CREDENTIALS
@@ -51,6 +51,7 @@ const authResolver = {
       await admin.save()
 
       return {
+        accessToken,
         isLoggedIn: true,
         user: payload
       }

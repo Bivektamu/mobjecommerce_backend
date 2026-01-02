@@ -13,7 +13,6 @@ const analyticsResolver = {
         salesAnalytics: async (parent: any, args: any, context: MyContext) => {
 
             const { auth } = context
-            console.log(auth)
             if (!auth) {
                 throw new GraphQLError('User not authenticated', {
                     extensions: {

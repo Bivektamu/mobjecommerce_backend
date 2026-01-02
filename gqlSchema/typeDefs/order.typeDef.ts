@@ -16,8 +16,6 @@ enum Status {
         color: Color!,
         quantity: Int!,
         size: Size!,
-        price: Int!,
-        imgUrl: String!
     }
 
     input OrderItemInput {
@@ -25,8 +23,6 @@ enum Status {
         color: Color!,
         quantity: Int!,
         size: Size!,
-        price: Int!,
-        imgUrl: String!
     }
     type Order {
         id: ID!,
@@ -38,19 +34,9 @@ enum Status {
         tax: Float!,
         items: [OrderItem!]!,
         shippingAddress: Address!
-        orderPlaced: Date!
+        createdAt: Date!
     }
 
-    
-    input OrderInput {
-        userId: ID!,
-        status:Status!,
-        total: Float!,
-        subTotal: Float!,
-        tax: Float!,
-        items: [OrderItemInput!]!,
-        shippingAddress: AddressInput!
-    }
         input OrderStatus {
             id: ID!,
             status:Status!

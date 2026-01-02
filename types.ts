@@ -38,6 +38,10 @@ export interface LoginInput {
     }
 }
 
+export interface InputId {
+    id:string
+}
+
 export interface CustomJwtPayload extends JwtPayload {
     role: UserRole,
     id: string,

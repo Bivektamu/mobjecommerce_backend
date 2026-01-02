@@ -6,15 +6,8 @@ const paymentTypeDef = gql`
         orderId:ID!
     }
 
-    input CartItemInput {
-        productId: ID!
-        quantity: Int!
-        size: Size!
-        color:Color!
-    }
-
     input CreateOrderInput {
-        items: [CartItemInput!]!
+        items: [OrderItemInput!]!
         shippingAddress: AddressInput!
         billingAddress: AddressInput
     }

@@ -1,10 +1,7 @@
 import UserSchem from "../../dataLayer/schema/User"
 import Order from "../../dataLayer/schema/Order"
 import { ErrorCode, MyContext, OrderItem, User, UserRole } from "../../types"
-import verifyUser from "../../utilities/verifyUser"
 import { GraphQLError } from "graphql"
-import Product from "../../dataLayer/schema/Product"
-
 
 const orderResolver = {
     Query: {
@@ -29,7 +26,7 @@ const orderResolver = {
             const limit = args.limit
             const orders = await Order.find()
                 .sort({
-                    orderPlaced: -1
+                    createdAt: -1
                 })
                 .limit(limit)
             return orders
@@ -68,10 +65,6 @@ const orderResolver = {
                     }
                 })
             }
-
-
-
-
 
             const orderNumber = args.orderNumber
             if (!orderNumber) {
