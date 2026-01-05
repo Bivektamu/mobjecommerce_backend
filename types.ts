@@ -115,7 +115,6 @@ export enum ErrorCode {
 export enum OrderStatus {
     CREATED = "CREATED",
     PENDING = "PENDING",
-    PAID = "PAID",
     COMPLETED = "COMPLETED",
     PROCESSING = "PROCESSING",
     CANCELLED = "CANCELLED",

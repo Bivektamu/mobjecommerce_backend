@@ -38,6 +38,7 @@ export const AddressSchema = new Schema({
 },
 )
 
+
 const UserSchema = new Schema({
     firstName: {
         type: String,

@@ -6,12 +6,24 @@ const paymentTypeDef = gql`
         orderId:ID!
     }
 
+    
+input BillingAddressInput {
+    street: String!,
+    building: String,
+    city: String!,
+    postcode: String!,
+    state: String!,
+    country: String!,
+}
+
     input CreateOrderInput {
         items: [OrderItemInput!]!
         shippingAddress: AddressInput!
-        billingAddress: AddressInput
-    }
+    } 
 
+type Query {
+    orderByPaymentIntent(paymentIntentId: String!): Order
+}
   type Mutation {
         createPaymentIntent(input: CreateOrderInput!): CreatePaymentIntentResponse!
     }

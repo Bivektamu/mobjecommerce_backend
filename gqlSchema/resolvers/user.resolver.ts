@@ -195,7 +195,14 @@ const userRresolver = {
         })
       }
 
-
+      if(auth.role !== UserRole.CUSTOMER) {
+         throw new GraphQLError('User not authorized', {
+          extensions: {
+            code: ErrorCode.WRONG_USER_TYPE
+          }
+        })
+      }
+      
       const user = await User.findById(auth.id)
       if (!user) {
         throw new GraphQLError('User not found', {
@@ -233,6 +240,8 @@ const userRresolver = {
 
       if (building) address.building = building
 
+
+      // this code is to remove any default address incase incoming address is set as default 
       if (setAsDefault && user.address.length > 0) {
         user.set('address', user.address.map(item => ({
           ...item,

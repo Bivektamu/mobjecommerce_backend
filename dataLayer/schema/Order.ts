@@ -104,6 +104,7 @@ const OrderSchema = new Schema({
         required: true,
     },
     stripePaymentIntentId: String,
+    stripePaymentId: String,
     // stripeCustomerId: String,
     tax: {
         type: Number,
@@ -125,10 +126,8 @@ const OrderSchema = new Schema({
         type: AddressSchema,
         required: true,
     },
-
     billingAddress: {
-        type: AddressSchema,
-        required: true,
+        type: String,
     },
 },
     { timestamps: true }

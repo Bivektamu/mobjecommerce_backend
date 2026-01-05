@@ -1,6 +1,6 @@
 import UserSchem from "../../dataLayer/schema/User"
 import Order from "../../dataLayer/schema/Order"
-import { ErrorCode, MyContext, OrderItem, User, UserRole } from "../../types"
+import { ErrorCode, MyContext, OrderItem, OrderStatus, User, UserRole } from "../../types"
 import { GraphQLError } from "graphql"
 
 const orderResolver = {
@@ -52,7 +52,7 @@ const orderResolver = {
                 })
             }
 
-            const orders = await Order.find({ userId: id })
+            const orders = await Order.find({ userId: id }).sort({createdAt: -1})
             return orders
         },
 

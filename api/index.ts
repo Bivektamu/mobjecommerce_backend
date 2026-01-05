@@ -16,9 +16,15 @@ import connectDB from '../dataLayer';
 import typeDefs from '../gqlSchema/typeDefs/index.typeDef'
 import { getAuth } from '../middleware/auth.middleware';
 import cookieParser from 'cookie-parser';
+import stripeWebhookHandler from '../webhooks/stripeWebhook';
 
 
 const app = express();
+app.post("/webhooks/stripe",
+  express.raw({type:"application/json"}),
+  stripeWebhookHandler
+)
+
 
 app.use(cookieParser())
 

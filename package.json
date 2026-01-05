@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon ./api/index.ts",
-    "start": "node .public/api/index.js"
+    "start": "node .public/api/index.js",
+    "update:addressBook": "ts-node ./scripts/updateUserAddressBook.ts"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +26,7 @@
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
     "graphql-upload-ts": "^2.1.2",
+    "i18n-iso-countries": "^7.14.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.3.5",
     "stripe": "^20.1.0"

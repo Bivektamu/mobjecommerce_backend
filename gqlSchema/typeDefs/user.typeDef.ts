@@ -24,7 +24,7 @@ type User {
     firstName: String!,
     lastName: String!,
     email:String!,
-    address: Address,
+    address: [Address],
     role: UserRole
     registeredDate: Date
 }
