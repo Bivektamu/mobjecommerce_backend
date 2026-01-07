@@ -20,7 +20,7 @@ import stripeWebhookHandler from '../webhooks/stripeWebhook';
 
 
 const app = express();
-app.post("/webhooks/stripe",
+app.post(`/webhooks/stripe/${process.env.NODE_ENV}`,
   express.raw({type:"application/json"}),
   stripeWebhookHandler
 )

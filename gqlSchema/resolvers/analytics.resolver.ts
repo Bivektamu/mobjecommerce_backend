@@ -9,7 +9,6 @@ const analyticsResolver = {
     Query: {
 
         salesAnalytics: async (_: any, args: any, context: MyContext) => {
-
             const { auth } = context
             if (!auth) {
                 throw new GraphQLError('User not authenticated', {
@@ -71,7 +70,6 @@ const analyticsResolver = {
 
         },
         orderAnalytics: async (_: any, args: any, context: MyContext) => {
-
             const { auth } = context
             if (!auth) {
                 throw new GraphQLError('User not authenticated', {
@@ -131,7 +129,6 @@ const analyticsResolver = {
         },
 
         userAnalytics: async (_: any, args: any, context: MyContext) => {
-
             const { auth } = context
             if (!auth) {
                 throw new GraphQLError('User not authenticated', {
@@ -245,7 +242,6 @@ const analyticsResolver = {
         },
 
         lowStockProducts: async (_: any, args: any, context: MyContext) => {
-
             const { auth } = context
             if (!auth) {
                 throw new GraphQLError('User not authenticated', {
@@ -280,7 +276,6 @@ const analyticsResolver = {
         },
 
         ordersByCategory: async (_: any, args: any, context: MyContext) => {
-
             const { auth } = context
             if (!auth) {
                 throw new GraphQLError('User not authenticated', {
