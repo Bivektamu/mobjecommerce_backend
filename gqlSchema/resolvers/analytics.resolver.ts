@@ -1,16 +1,14 @@
 import Order from "../../dataLayer/schema/Order"
-import User from "../../dataLayer/schema/User"
 import { CompletedOrder, ErrorCode, MyContext, OrderItemPopulated, OrderItemsCategoryCounter, OrderStatus, unknownShape, UserRole } from "../../types"
-import verifyUser from "../../utilities/verifyUser"
 
-import { startFiscalDate, currentStartDate, currentEndDate, pastStartDate, pastEndDate } from '../../utilities/getDates'
+import getDates from '../../utilities/getDates'
 import Product from "../../dataLayer/schema/Product"
 import { GraphQLError } from "graphql"
 
 const analyticsResolver = {
     Query: {
 
-        salesAnalytics: async (parent: any, args: any, context: MyContext) => {
+        salesAnalytics: async (_: any, args: any, context: MyContext) => {
 
             const { auth } = context
             if (!auth) {
@@ -28,6 +26,9 @@ const analyticsResolver = {
                     }
                 })
             }
+
+            const { currentStartDate, currentEndDate, pastStartDate, pastEndDate } = getDates()
+
 
             const currentMonthOrders = await Order.find({
                 createdAt: {
@@ -69,7 +70,7 @@ const analyticsResolver = {
 
 
         },
-        orderAnalytics: async (parent: any, args: any, context: MyContext) => {
+        orderAnalytics: async (_: any, args: any, context: MyContext) => {
 
             const { auth } = context
             if (!auth) {
@@ -87,6 +88,9 @@ const analyticsResolver = {
                     }
                 })
             }
+
+            const { currentStartDate, currentEndDate, pastStartDate, pastEndDate } = getDates()
+
 
             const currentMonthOrders = (await Order.find({
                 createdAt: {
@@ -126,7 +130,7 @@ const analyticsResolver = {
 
         },
 
-        userAnalytics: async (parent: any, args: any, context: MyContext) => {
+        userAnalytics: async (_: any, args: any, context: MyContext) => {
 
             const { auth } = context
             if (!auth) {
@@ -144,6 +148,9 @@ const analyticsResolver = {
                     }
                 })
             }
+
+            const { currentStartDate, currentEndDate, pastStartDate, pastEndDate } = getDates()
+
 
             const currentMonthActiveUsers = (await Order.find({
                 createdAt: {
@@ -186,7 +193,7 @@ const analyticsResolver = {
             }
         },
 
-        salesOverTime: async (parent: any, args: any, context: MyContext) => {
+        salesOverTime: async (_: any, args: any, context: MyContext) => {
 
             const { auth } = context
             if (!auth) {
@@ -205,6 +212,8 @@ const analyticsResolver = {
                 })
             }
 
+            const { currentStartDate, currentEndDate } = getDates()
+
             const monthlySales = await Order.find({
                 createdAt: {
                     $gte: currentStartDate,
@@ -215,6 +224,7 @@ const analyticsResolver = {
                 .select('total createdAt -_id')
                 .sort({ createdAt: 1 })
                 .lean()
+
 
             if (monthlySales.length > 0) {
                 const groupedBySales = monthlySales.reduce((acc: unknownShape, { total, createdAt }) => {
@@ -234,7 +244,7 @@ const analyticsResolver = {
             return []
         },
 
-        lowStockProducts: async (parent: any, args: any, context: MyContext) => {
+        lowStockProducts: async (_: any, args: any, context: MyContext) => {
 
             const { auth } = context
             if (!auth) {
@@ -269,7 +279,7 @@ const analyticsResolver = {
             return []
         },
 
-        ordersByCategory: async (parent: any, args: any, context: MyContext) => {
+        ordersByCategory: async (_: any, args: any, context: MyContext) => {
 
             const { auth } = context
             if (!auth) {
@@ -287,6 +297,10 @@ const analyticsResolver = {
                     }
                 })
             }
+
+            const { currentStartDate, currentEndDate } = getDates()
+
+
             const monthlyOrders = await Order.find({
                 createdAt: {
                     $gte: currentStartDate,
