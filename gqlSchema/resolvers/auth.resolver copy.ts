@@ -1,10 +1,10 @@
 import 'dotenv/config'
 import verifyUser from '../../utilities/verifyUser';
-import { CustomJwtPayload, ErrorCode, FormError, GoogleUserInfo, LoginInput, MyContext, UserRole, ValidateSchema } from '../../types';
+import { CustomJwtPayload, ErrorCode, FormError, LoginInput, MyContext, UserRole, ValidateSchema } from '../../types';
 import validateForm from '../../utilities/validateForm';
 import User from '../../dataLayer/schema/User';
 import bcrypt from 'bcrypt'
-import { GoogleAuth, OAuth2Client } from 'google-auth-library'
+import { OAuth2Client } from 'google-auth-library'
 import { GraphQLError } from 'graphql';
 import { createJwtTokens, resetCookies, setCookies } from '../../middleware/auth.middleware';
 const authResolver = {
@@ -134,16 +134,19 @@ const authResolver = {
 
       const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
-      const tokenInfo = await client.getTokenInfo(credential);
+      console.log(credential)
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID as string
+      })
 
-      if (tokenInfo.aud !== process.env.GOOGLE_CLIENT_ID) {
-        throw new GraphQLError('Goggle verification failed', {
-          extensions: {
-            code: ErrorCode.GOOGLE_ERROR
-          }
-        })
-      }
-      const { email } = tokenInfo
+      const payload = ticket.getPayload()
+      if (!payload) throw new GraphQLError('Goggle verification failed', {
+        extensions: {
+          code: ErrorCode.GOOGLE_ERROR
+        }
+      })
+      const { email, given_name, family_name, sub } = payload
       let user = await User.findOne({ email })
 
       const jwtPayload: CustomJwtPayload = {
@@ -152,16 +155,6 @@ const authResolver = {
       }
 
       if (!user) {
-
-        const response = await client.request<GoogleUserInfo>({
-          url: 'https://www.googleapis.com/oauth2/v3/userinfo',
-          headers: {
-            Authorization: `Bearer ${credential}`,
-          },
-        })
-
-        const {family_name, given_name, sub} =  response.data
-
         user = new User({
           firstName: given_name,
           lastName: family_name,
