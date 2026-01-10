@@ -1,47 +1,31 @@
 
 import { GraphQLError } from "graphql"
-import { Address, Color, ErrorCode, MyContext, OrderItem, OrderStatus, Size } from "../../types"
+import { Address, Color, CreateOrder, ErrorCode, MyContext, OrderItem, OrderStatus, Size } from "../../types"
 import Product from "../../dataLayer/schema/Product"
 import Order from "../../dataLayer/schema/Order"
 import getOrderNumber from "../../utilities/getOrderNumber"
 import { stripe } from "../../lib/stripe"
 import User from "../../dataLayer/schema/User"
 import getCountryCode from "../../utilities/getCountryCode"
-
-interface CartItemInput {
-    input: {
-        items: OrderItem[],
-        shippingAddress: Address,
-    }
-}
+import Stripe from "stripe"
 
 interface IntentPaymentId {
-    paymentIntentId:string
+    paymentIntentId: string
 }
 
 const paymentResolvers = {
     Mutation: {
-        createPaymentIntent: async (_: any, args: CartItemInput, context: MyContext) => {
+        createPaymentIntent: async (_: any, args: CreateOrder, context: MyContext) => {
+            const { items, shippingAddress, email, billingAddress } = args.input
             const { auth } = context
-            if (!auth) {
-                throw new GraphQLError('User not authenticated', {
+
+            if (!email && !auth) {
+                throw new GraphQLError('User Id or email not provided', {
                     extensions: {
-                        code: ErrorCode.NOT_AUTHENTICATED
+                        code: ErrorCode.INPUT_ERROR
                     }
                 })
             }
-
-            const user = await User.findById(auth.id)
-
-            if(!user) {
-                throw new GraphQLError('User not found', {
-                    extensions: {
-                        code:ErrorCode.USER_NOT_FOUND
-                    }
-                })
-            }
-
-            const { items, shippingAddress } = args.input
 
             if (!items.length) {
                 throw new GraphQLError('Cart is Empty', {
@@ -85,52 +69,116 @@ const paymentResolvers = {
 
             const tax = Math.round(subTotal * 0.1)
             const total = subTotal + tax
-            const customer = {
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email:user.email
-            }
+
+            const { street, city, state, postcode, building, country } = shippingAddress
+
+            const plainAddress = building ? building + ',' : '' + `${street}, ${city}, ${state}, ${postcode}, ${country}`
+            const plainBilling = billingAddress.building ? billingAddress.building + ',' : '' + `${billingAddress.street}, ${billingAddress.city}, ${billingAddress.state}, ${billingAddress.postcode}, ${billingAddress.country}`
 
             const orderNumber = await getOrderNumber()
 
-            const order = await Order.create({
-                userId: auth.id,
-                customer: customer,
-                orderNumber: orderNumber,
-                subTotal,
-                status: OrderStatus.PENDING,
-                tax,
-                total,
-                shippingAddress,
-                items: orderItems,
-            })
-            const {street, city, state, postcode, building, country} = shippingAddress
+            let newPaymentIntent:Stripe.PaymentIntentCreateParams
+            let order
 
-            const plainAddress = building?building+',':''+`${street}, ${city}, ${state}, ${postcode}, ${country}`
-            const paymentIntent = await stripe.paymentIntents.create({
-                receipt_email:customer.email,
-                amount:total * 100,
-                currency:'aud',
-                shipping: {
-                    name:customer.firstName + customer.lastName,
-                    address: {
-                        line1: street as string,
-                        city: city as string,
-                        state: state as string,
-                        postal_code: postcode as string,
-                        country: getCountryCode(country as string),
-                    } 
-                },
-                metadata: {
-                    orderId: order.id,
-                    customer: customer.firstName+' '+customer.lastName,
-                    email:customer.email,
-                    shippingAddress: plainAddress
-                },
-                automatic_payment_methods: {
-                    enabled:true,
+            if (auth) {
+
+                const user = await User.findById(auth.id)
+
+                if (!user) {
+                    throw new GraphQLError('User not found', {
+                        extensions: {
+                            code: ErrorCode.USER_NOT_FOUND
+                        }
+                    })
                 }
-            })
+
+                const customer = {
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email
+                }
+
+                 order = await Order.create({
+                    userId: auth?.id,
+                    customer: customer,
+                    orderNumber: orderNumber,
+                    subTotal,
+                    status: OrderStatus.PENDING,
+                    tax,
+                    total,
+                    shippingAddress,
+                    items: orderItems,
+                })
+
+                newPaymentIntent = {
+                    receipt_email: user.email,
+                    amount: total * 100,
+                    currency: 'aud',
+                    shipping: {
+                        name: user.firstName + ' ' + user.lastName,
+                        address: {
+                            line1: street as string,
+                            city: city as string,
+                            state: state as string,
+                            postal_code: postcode as string,
+                            country: getCountryCode(country as string),
+                        }
+                    },
+                    metadata: {
+                        isGuest: 'false',
+                        email: user.email,
+                        orderId: order.id,
+                        customer: `${customer.firstName} ${customer.lastName}`,
+                        shippingAddress: plainAddress,
+                        billingAddress: plainBilling
+                    },
+                    automatic_payment_methods: {
+                        enabled: true,
+                    }
+                }
+
+            }
+            else {
+                 order = await Order.create({
+                    orderNumber: orderNumber,
+                    subTotal,
+                    status: OrderStatus.PENDING,
+                    tax,
+                    total,
+                    shippingAddress,
+                    email:email,
+                    items: orderItems,
+                })
+
+                newPaymentIntent = {
+                    receipt_email: email!,
+                    amount: total * 100,
+                    currency: 'aud',
+                    shipping: {
+                        name: 'guest',
+                        address: {
+                            line1: street as string,
+                            city: city as string,
+                            state: state as string,
+                            postal_code: postcode as string,
+                            country: getCountryCode(country as string),
+                        }
+                    },
+                    metadata: {
+                        isGuest: 'true',
+                        email: email!,
+                        orderId: order.id,
+                        customer: `guest`,
+                        shippingAddress: plainAddress,
+                        billingAddress: plainBilling
+                    },
+                    automatic_payment_methods: {
+                        enabled: true,
+                    }
+                }
+
+            }
+            const paymentIntent = await stripe.paymentIntents.create(newPaymentIntent)
             order.stripePaymentIntentId = paymentIntent.id
             await order.save()
             return {
@@ -140,9 +188,9 @@ const paymentResolvers = {
         }
     },
     Query: {
-        orderByPaymentIntent: async(_:any, args:IntentPaymentId) => {
-            const order = await Order.findOne({stripePaymentIntentId: args.paymentIntentId})
-            if(!order) {
+        orderByPaymentIntent: async (_: any, args: IntentPaymentId) => {
+            const order = await Order.findOne({ stripePaymentIntentId: args.paymentIntentId })
+            if (!order) {
                 throw new GraphQLError('Order not found', {
                     extensions: {
                         code: ErrorCode.NOT_FOUND

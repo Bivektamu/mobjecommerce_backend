@@ -39,7 +39,7 @@ export interface LoginInput {
 }
 
 export interface InputId {
-    id:string
+    id: string
 }
 
 export interface CustomJwtPayload extends JwtPayload {
@@ -155,6 +155,42 @@ export interface OrderItem {
     unitPrice: number,
 }
 
+export interface RefundSchema {
+    refundId: String,
+    amount: Number,
+    createdAd: Date,
+}
+
+export interface CreateOrder {
+    input: {
+        items: OrderItem[],
+        shippingAddress: Address,
+        billingAddress: Omit<Address, 'label' | 'setAsDefault'>,
+        email?: string
+    }
+}
+
+export interface Order {
+    id: string,
+    orderNumber: string,
+    userId?: string,
+    email?:string,
+    status: OrderStatus,
+    currency: string,
+    subTotal: number,
+    tax: number,
+    total: number,
+    stripePaymentIntentId?: string,
+    stripePaymentId?: string,
+    items: [OrderItem],
+    refunds?: [RefundSchema],
+    customer?: Pick<User, 'firstName' | 'lastName' | 'email'>,
+    shippingAddress: Address,
+    billingAddress?:string,
+    createdAt:Date,
+    updatedAt:Date
+}
+
 export enum Color {
     BLACK = 'BLACK',
     RED = 'RED',
@@ -171,12 +207,12 @@ export enum Size {
 
 
 export interface GoogleUserInfo {
-  sub: string;
-  name: string;
-  given_name: string;
-  family_name: string;
-  picture: string;
-  email: string;
-  email_verified: boolean;
-  locale: string;
+    sub: string;
+    name: string;
+    given_name: string;
+    family_name: string;
+    picture: string;
+    email: string;
+    email_verified: boolean;
+    locale: string;
 }

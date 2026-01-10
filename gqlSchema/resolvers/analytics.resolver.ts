@@ -4,6 +4,7 @@ import { CompletedOrder, ErrorCode, MyContext, OrderItemPopulated, OrderItemsCat
 import getDates from '../../utilities/getDates'
 import Product from "../../dataLayer/schema/Product"
 import { GraphQLError } from "graphql"
+import User from "../../dataLayer/schema/User"
 
 const analyticsResolver = {
     Query: {
@@ -149,43 +150,36 @@ const analyticsResolver = {
             const { currentStartDate, currentEndDate, pastStartDate, pastEndDate } = getDates()
 
 
-            const currentMonthActiveUsers = (await Order.find({
-                createdAt: {
+            const currentMonthNewUsers = (await User.find({
+                registeredDate: {
                     $gte: currentStartDate,
                     $lte: currentEndDate
                 },
-                status: OrderStatus.COMPLETED
-            }).select('userId -_id').lean())
+            }).select('_id').lean())
 
-            const uniqueCurrentMonthActiveUsers = (new Set(currentMonthActiveUsers.map(user => (user.userId).toString())))
-
-
-            const previousMonthActiveUsers = (await Order.find({
-                createdAt: {
+            const previousMonthNewUsers = (await User.find({
+                registeredDate: {
                     $gte: pastStartDate,
                     $lte: pastEndDate
                 },
                 status: OrderStatus.COMPLETED
-            }).select('userId -_id').lean())
-
-            const uniquePreviousMonthActiveUsers = (new Set(previousMonthActiveUsers.map(user => (user.userId).toString())))
+            }).select('_id').lean())
 
             let changeInUsers = 0
 
-            if (uniqueCurrentMonthActiveUsers.size > 0 && uniquePreviousMonthActiveUsers.size > 0) {
-                changeInUsers = ((uniqueCurrentMonthActiveUsers.size - uniquePreviousMonthActiveUsers.size) / uniquePreviousMonthActiveUsers.size) * 100
+            if (currentMonthNewUsers.length > 0 && previousMonthNewUsers.length > 0) {
+                changeInUsers = ((currentMonthNewUsers.length - previousMonthNewUsers.length) / previousMonthNewUsers.length) * 100
 
                 if (!Number.isInteger(changeInUsers)) {
                     changeInUsers = parseFloat(changeInUsers.toFixed(2))
                 }
-
             }
-            else if (uniquePreviousMonthActiveUsers.size < 1) {
+            else if (previousMonthNewUsers.length < 1) {
                 changeInUsers = 100
             }
 
             return {
-                users: uniqueCurrentMonthActiveUsers.size,
+                users: currentMonthNewUsers.length,
                 changeInUsers
             }
         },

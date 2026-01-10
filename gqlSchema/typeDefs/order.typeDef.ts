@@ -27,7 +27,7 @@ enum Status {
     type Order {
         id: ID!,
         orderNumber: String!,
-        userId: ID!,
+        userId: ID,
         status:Status!,
         total: Float!,
         subTotal: Float!,

@@ -19,6 +19,8 @@ input BillingAddressInput {
     input CreateOrderInput {
         items: [OrderItemInput!]!
         shippingAddress: AddressInput!
+        billingAddress: BillingAddressInput!
+        email:String
     } 
 
 type Query {

@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { Color, OrderStatus, Size } from "../../types";
+import { Color, Order, OrderItem, OrderStatus, Size } from "../../types";
 import { AddressSchema } from "./User";
 
 
@@ -81,12 +81,16 @@ const OrderSchema = new Schema({
     },
     userId: {
         type: Schema.Types.ObjectId,
-        required: true,
+        required: function(this:Order) {return !this.email},
         ref: 'User'
     },
     customer: {
-        type: CustomerSchema,
-        required: true
+        type:CustomerSchema,
+        required: function(this:Order) {return this.userId},
+    },
+    email: {
+        type: String,
+        required: function(this:Order) {return !this.userId},
     },
     status: {
         type: String,
