@@ -16,6 +16,7 @@ enum Status {
         color: Color!,
         quantity: Int!,
         size: Size!,
+        unitPrice:Int!,
     }
 
     input OrderItemInput {

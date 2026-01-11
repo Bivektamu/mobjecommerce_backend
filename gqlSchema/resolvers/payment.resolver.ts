@@ -18,6 +18,7 @@ const paymentResolvers = {
         createPaymentIntent: async (_: any, args: CreateOrder, context: MyContext) => {
             const { items, shippingAddress, email, billingAddress } = args.input
             const { auth } = context
+            console.log(email)
 
             if (!email && !auth) {
                 throw new GraphQLError('User Id or email not provided', {
