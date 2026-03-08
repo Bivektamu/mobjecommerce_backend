@@ -53,7 +53,7 @@ const productResolver = {
         })
       }
 
-      const folder = `products/${category}/`
+      const folder = `${process.env.NODE_ENV}/products/${category}/`
 
 
       const uploadPromises = imgs.map((item: inputProductImg) => uploadImage(item, slug, folder))
@@ -88,6 +88,7 @@ const productResolver = {
 
       const { title, slug, description, colors, sizes, price, category, quantity, sku, stockStatus, featured, newImgs, oldImgs, id } = args.input
 
+
       const productExists = await Product.findById(id)
       if (!productExists) {
         throw new GraphQLError('Product not found', {
@@ -106,7 +107,7 @@ const productResolver = {
       }
 
       if (newImgs.length > 0) {
-        const folder = `products/${category}/`
+        const folder = `${process.env.NODE_ENV}/products/${category}/`
         const uploadPromises = newImgs.map((item: inputProductImg) => uploadImage(item, slug, folder))
         const uploadedImgs = await Promise.all(uploadPromises);
         toUpdateImgs = [...toUpdateImgs, ...uploadedImgs]
