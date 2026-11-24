@@ -1,54 +1,50 @@
 import path from "path";
-import fs from 'fs'
+import fs from "fs";
 import { inputProductImg } from "../types";
 import mongoose from "mongoose";
 import { S3Client } from "@aws-sdk/client-s3"; // ES Modules import
-import { Upload } from "@aws-sdk/lib-storage"
+import { Upload } from "@aws-sdk/lib-storage";
 
-
-const uploadImage = async (item: inputProductImg, name: string, folder: string = '') => {
-  const file = await item.img
+const uploadImage = async (item: inputProductImg, name: string, folder: string = "") => {
+  const file = await item.img;
   const { createReadStream, filename, mimetype, encoding } = await file;
-  const uploadUrl = folder + name + '-' + Date.now() + Math.floor((Math.random() * 1000)) + path.extname(filename)
-
-
+  const uploadUrl =
+    folder + name + "-" + Date.now() + Math.floor(Math.random() * 1000) + path.extname(filename);
 
   const config = {
     region: process.env.AWS_REGION as string,
     accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
-  }
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
+  };
 
   try {
     const aws_client = new S3Client(config);
-    const input = { // PutObjectRequest
+    const input = {
+      // PutObjectRequest
       ContentType: mimetype,
       Bucket: process.env.AWS_BUCKET as string,
       Key: uploadUrl,
-      Body: createReadStream()
-    }
+      Body: createReadStream(),
+    };
     const upload = new Upload({
       client: aws_client,
-      params: input
-    })
+      params: input,
+    });
 
-    const data = await upload.done()
+    const data = await upload.done();
 
     if (data) {
-      const url = `https://${process.env.AWS_BUCKET}.s3.amazonaws.com/${uploadUrl}`
+      const url = `https://${process.env.AWS_BUCKET}.s3.amazonaws.com/${uploadUrl}`;
 
       const uploadedImage = {
-        url
-      }
-      return uploadedImage
+        url,
+      };
+      return uploadedImage;
     }
-
   } catch (error) {
-    console.error('Error uploading file:', error);
-    throw error
+    console.error("Error uploading file:", error);
+    throw error;
   }
-
-
 
   // const stream = createReadStream()
   // const directory = path.join(process.cwd(), folder)
@@ -77,7 +73,6 @@ const uploadImage = async (item: inputProductImg, name: string, folder: string =
   // }
 
   // return uploadedImage
+};
 
-}
-
-export default uploadImage
+export default uploadImage;

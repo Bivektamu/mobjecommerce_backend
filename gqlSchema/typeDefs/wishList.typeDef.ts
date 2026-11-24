@@ -1,35 +1,33 @@
 import gql from "graphql-tag";
 
-
 const wishListTypeDef = gql`
+  type ProductId {
+    id: ID!
+    createdAt: Date!
+  }
 
-    type ProductId {
-        id: ID!,
-        createdAt: Date!
-    }
+  type WishList {
+    id: ID!
+    userId: ID!
+    products: [ProductId!]
+  }
 
-    type WishList {
-        id:ID!,
-        userId:ID!,
-        products:[ProductId!]
-    }
+  input ProductIdInput {
+    id: ID!
+  }
 
-    input ProductIdInput {
-        id: ID!,
-    }
-    
-    input WishListInput {
-        userId:ID!,
-        products:[ProductIdInput!]
-    }
-    
-    type Mutation {
-        addToWishList(input:WishListInput):WishList
-    }
+  input WishListInput {
+    userId: ID!
+    products: [ProductIdInput!]
+  }
 
-    type Query {
-        wishListByUserId(userId:ID):WishList
-    }
-`
+  type Mutation {
+    addToWishList(input: WishListInput): WishList
+  }
 
-export default wishListTypeDef
+  type Query {
+    wishListByUserId(userId: ID): WishList
+  }
+`;
+
+export default wishListTypeDef;

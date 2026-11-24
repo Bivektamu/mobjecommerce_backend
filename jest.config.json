@@ -1,0 +1,10 @@
+{
+  "preset": "ts-jest",
+  "testEnvironment": "node",
+  "roots": ["<rootDir>/tests"],
+  "globalSetup": "<rootDir>/tests/global-setup.ts",
+  "globalTeardown": "<rootDir>/tests/global-teardown.ts",
+  "setupFiles": ["<rootDir>/tests/jest.setup.ts"],
+  "setupFilesAfterEnv": ["<rootDir>/tests/jest.setupAfterEnv.ts"],
+  "testTimeout": 30000
+}

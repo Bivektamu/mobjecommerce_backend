@@ -1,82 +1,15 @@
-import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4'
-import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
-import {ApolloServerPluginLandingPageLocalDefault} from '@apollo/server/plugin/landingPage/default'
-import express from 'express'
-import {graphqlUploadExpress} from "graphql-upload-ts";
-import cors from 'cors'
-import {Request, Response} from 'express'
-import http from 'http';
-import 'dotenv/config'
+import "dotenv/config";
 
-
-import resolvers from '../gqlSchema/resolvers/index.resolver';
-
-import connectDB from '../dataLayer';
-import typeDefs from '../gqlSchema/typeDefs/index.typeDef'
-import { getAuth } from '../middleware/auth.middleware';
-import cookieParser from 'cookie-parser';
-import stripeWebhookHandler from '../webhooks/stripeWebhook';
-
-
-const app = express();
-app.post(`/webhooks/stripe/${process.env.NODE_ENV}`,
-  express.raw({type:"application/json"}),
-  stripeWebhookHandler
-)
-
-
-app.use(cookieParser())
-
-app.use(express.static('public'))
-app.use(graphqlUploadExpress({
-  overrideSendResponse: false 
-}));
-
-const httpServer = http.createServer(app);
-
-interface Context {
-  req:Request,
-  res:Response
-}
-
-const server = new ApolloServer<Context>({
-  typeDefs,
-  resolvers,
-  introspection: true,
-  csrfPrevention: true,
-  plugins: [
-    ApolloServerPluginDrainHttpServer({ httpServer }),
-    ApolloServerPluginLandingPageLocalDefault({
-      embed:true
-    })
-  ],
-});
+import connectDB from "../dataLayer";
+import { createServer } from "./app";
 
 async function startServer() {
-  await connectDB()
+  await connectDB();
 
-  await server.start();
+  const { httpServer } = await createServer();
 
-  app.use('/graphql',
-    cors<cors.CorsRequest>(
-      {
-        origin:[process.env.LOCAL_URI!, process.env.PROD_URI!],
-        credentials: true, 
-      }
-    ),
-    express.json(),
-    expressMiddleware(server, {
-      context: async ({ req, res }) => ({ 
-        req, 
-        res,
-        auth: getAuth(req.headers.authorization || null)
-       }),
-    }));
-
-    await new Promise<void>((resolve) => httpServer.listen({ port: 3000 }, resolve));
-    console.log(`🚀 Server is ready.`);
-
+  await new Promise<void>((resolve) => httpServer.listen({ port: 3000 }, resolve));
+  console.log(`🚀 Server is ready.`);
 }
 
-startServer()
+startServer();

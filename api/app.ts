@@ -1,0 +1,75 @@
+import { ApolloServer } from "@apollo/server";
+import { expressMiddleware } from "@apollo/server/express4";
+import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
+import express from "express";
+import { graphqlUploadExpress } from "graphql-upload-ts";
+import cors from "cors";
+import { Request, Response } from "express";
+import http from "http";
+import "dotenv/config";
+
+import resolvers from "../gqlSchema/resolvers/index.resolver";
+import typeDefs from "../gqlSchema/typeDefs/index.typeDef";
+import { getAuth } from "../middleware/auth.middleware";
+import cookieParser from "cookie-parser";
+import stripeWebhookHandler from "../webhooks/stripeWebhook";
+
+interface Context {
+  req: Request;
+  res: Response;
+}
+
+export async function createServer() {
+  const app = express();
+
+  app.post(
+    `/webhooks/stripe/${process.env.NODE_ENV}`,
+    express.raw({ type: "application/json" }),
+    stripeWebhookHandler,
+  );
+
+  app.use(cookieParser());
+
+  app.use(express.static("public"));
+  app.use(
+    graphqlUploadExpress({
+      overrideSendResponse: false,
+    }),
+  );
+
+  const httpServer = http.createServer(app);
+
+  const server = new ApolloServer<Context>({
+    typeDefs,
+    resolvers,
+    introspection: true,
+    csrfPrevention: true,
+    plugins: [
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+      ApolloServerPluginLandingPageLocalDefault({
+        embed: true,
+      }),
+    ],
+  });
+
+  await server.start();
+
+  app.use(
+    "/graphql",
+    cors<cors.CorsRequest>({
+      origin: [process.env.LOCAL_URI!, process.env.PROD_URI!],
+      credentials: true,
+    }),
+    express.json(),
+    expressMiddleware(server, {
+      context: async ({ req, res }) => ({
+        req,
+        res,
+        auth: getAuth(req.headers.authorization || null),
+      }),
+    }),
+  );
+
+  return { app, httpServer, server };
+}

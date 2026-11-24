@@ -1,318 +1,322 @@
-import 'dotenv/config'
-import verifyUser from '../../utilities/verifyUser';
-import { CustomJwtPayload, ErrorCode, FormError, GoogleUserInfo, LoginInput, MyContext, UserRole, ValidateSchema } from '../../types';
-import validateForm from '../../utilities/validateForm';
-import User from '../../dataLayer/schema/User';
-import bcrypt from 'bcrypt'
-import { GoogleAuth, OAuth2Client } from 'google-auth-library'
-import { GraphQLError } from 'graphql';
-import { createJwtTokens, resetCookies, setCookies } from '../../middleware/auth.middleware';
+import "dotenv/config";
+import verifyUser from "../../utilities/verifyUser";
+import {
+  CustomJwtPayload,
+  ErrorCode,
+  FormError,
+  GoogleUserInfo,
+  LoginInput,
+  MyContext,
+  UserRole,
+  ValidateSchema,
+} from "../../types";
+import validateForm from "../../utilities/validateForm";
+import User from "../../dataLayer/schema/User";
+import bcrypt from "bcrypt";
+import { GoogleAuth, OAuth2Client } from "google-auth-library";
+import { GraphQLError } from "graphql";
+import { createJwtTokens, resetCookies, setCookies } from "../../middleware/auth.middleware";
 const authResolver = {
   Mutation: {
     logInAdmin: async (_: any, args: LoginInput, context: MyContext) => {
-
-      const { email, password } = args.input
+      const { email, password } = args.input;
 
       if (email !== process.env.ADMIN_EMAIL! || password !== process.env.ADMIN_PASSWORD!) {
-        throw new GraphQLError('Invalid Credentials', {
+        throw new GraphQLError("Invalid Credentials", {
           extensions: {
-            code: ErrorCode.BAD_CREDENTIALS
-          }
-        })
+            code: ErrorCode.BAD_CREDENTIALS,
+          },
+        });
       }
-      const admin = await User.findOne({ email })
+      const admin = await User.findOne({ email });
 
       if (!admin) {
-        throw new GraphQLError('Admin not created', {
+        throw new GraphQLError("Admin not created", {
           extensions: {
-            code: ErrorCode.USER_NOT_FOUND
-          }
-        })
+            code: ErrorCode.USER_NOT_FOUND,
+          },
+        });
       }
 
       if (admin.role !== UserRole.ADMIN) {
-        throw new GraphQLError('User not authorized', {
+        throw new GraphQLError("User not authorized", {
           extensions: {
-            code: ErrorCode.WRONG_USER_TYPE
-          }
-        })
+            code: ErrorCode.WRONG_USER_TYPE,
+          },
+        });
       }
 
       const payload: CustomJwtPayload = {
         role: UserRole.ADMIN,
-        id: admin.id
-      }
+        id: admin.id,
+      };
 
-      const { accessToken, refreshToken } = createJwtTokens(payload)
+      const { accessToken, refreshToken } = createJwtTokens(payload);
 
-      const { res } = context
-      setCookies(res, refreshToken)
-      admin.refreshToken = refreshToken
-      await admin.save()
+      const { res } = context;
+      setCookies(res, refreshToken);
+      admin.refreshToken = refreshToken;
+      await admin.save();
 
       return {
         accessToken,
         isLoggedIn: true,
-        user: payload
-      }
+        user: payload,
+      };
     },
 
     logInUser: async (_: any, args: LoginInput, context: MyContext) => {
-
-      const { email, password } = args.input
+      const { email, password } = args.input;
 
       const validateSchema: ValidateSchema<any>[] = [
-        { value: email, name: 'email', type: 'email' },
-        { value: password, name: 'password', type: 'string' },
-      ]
-      const errors: FormError = validateForm(validateSchema)
+        { value: email, name: "email", type: "email" },
+        { value: password, name: "password", type: "string" },
+      ];
+      const errors: FormError = validateForm(validateSchema);
       if (Object.keys(errors).length > 0) {
-        throw new GraphQLError('Login fields error', {
+        throw new GraphQLError("Login fields error", {
           extensions: {
             code: ErrorCode.VALIDATION_ERROR,
-            extra: errors
-          }
-        })
+            extra: errors,
+          },
+        });
       }
 
-      const user = await User.findOne({ email: email.toLowerCase() })
+      const user = await User.findOne({ email: email.toLowerCase() });
 
       if (!user) {
-        throw new GraphQLError('User not found', {
+        throw new GraphQLError("User not found", {
           extensions: {
             code: ErrorCode.USER_NOT_FOUND,
-          }
-        })
+          },
+        });
       }
 
       if (user.role !== UserRole.CUSTOMER) {
-        throw new GraphQLError('Wrong User type', {
+        throw new GraphQLError("Wrong User type", {
           extensions: {
             code: ErrorCode.WRONG_USER_TYPE,
-          }
-        })
+          },
+        });
       }
 
-      const isMatched = await bcrypt.compare(password as string, user.password as string)
+      const isMatched = await bcrypt.compare(password as string, user.password as string);
 
       if (!isMatched) {
-        throw new GraphQLError('Email or password wrong', {
+        throw new GraphQLError("Email or password wrong", {
           extensions: {
             code: ErrorCode.BAD_CREDENTIALS,
-          }
-        })
+          },
+        });
       }
 
       const payload: CustomJwtPayload = {
         role: UserRole.CUSTOMER,
-        id: user.id
-      }
+        id: user.id,
+      };
 
-      const { accessToken, refreshToken } = createJwtTokens(payload)
+      const { accessToken, refreshToken } = createJwtTokens(payload);
 
-      user.refreshToken = refreshToken
-      await user.save()
+      user.refreshToken = refreshToken;
+      await user.save();
 
-      const { res } = context
+      const { res } = context;
 
-      setCookies(res, refreshToken)
+      setCookies(res, refreshToken);
 
       return {
         accessToken,
         isLoggedIn: true,
-        user: user
-      }
-
+        user: user,
+      };
     },
     logInGoogleUser: async (parent: any, args: any, context: MyContext) => {
-      const { credential } = args
-      if (!credential) throw new GraphQLError('Goggle Credential not provided', {
-        extensions: {
-          code: ErrorCode.GOOGLE_ERROR
-        }
-      })
+      const { credential } = args;
+      if (!credential)
+        throw new GraphQLError("Goggle Credential not provided", {
+          extensions: {
+            code: ErrorCode.GOOGLE_ERROR,
+          },
+        });
 
-      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
       const tokenInfo = await client.getTokenInfo(credential);
 
       if (tokenInfo.aud !== process.env.GOOGLE_CLIENT_ID) {
-        throw new GraphQLError('Goggle verification failed', {
+        throw new GraphQLError("Goggle verification failed", {
           extensions: {
-            code: ErrorCode.GOOGLE_ERROR
-          }
-        })
+            code: ErrorCode.GOOGLE_ERROR,
+          },
+        });
       }
-      const { email } = tokenInfo
-      let user = await User.findOne({ email })
+      const { email } = tokenInfo;
+      let user = await User.findOne({ email });
 
       const jwtPayload: CustomJwtPayload = {
         role: UserRole.CUSTOMER,
-        id: user?.id
-      }
+        id: user?.id,
+      };
 
       if (!user) {
-
         const response = await client.request<GoogleUserInfo>({
-          url: 'https://www.googleapis.com/oauth2/v3/userinfo',
+          url: "https://www.googleapis.com/oauth2/v3/userinfo",
           headers: {
             Authorization: `Bearer ${credential}`,
           },
-        })
+        });
 
-        const {family_name, given_name, sub} =  response.data
+        const { family_name, given_name, sub } = response.data;
 
         user = new User({
           firstName: given_name,
           lastName: family_name,
           email,
           role: UserRole.CUSTOMER,
-          googleId: sub
-        })
+          googleId: sub,
+        });
 
-        await user.save()
-        jwtPayload.id = user.id
+        await user.save();
+        jwtPayload.id = user.id;
       }
 
-      const { accessToken, refreshToken } = createJwtTokens(jwtPayload)
+      const { accessToken, refreshToken } = createJwtTokens(jwtPayload);
 
-      user.refreshToken = refreshToken
-      await user.save()
+      user.refreshToken = refreshToken;
+      await user.save();
 
-      const { res } = context
-      setCookies(res, refreshToken)
+      const { res } = context;
+      setCookies(res, refreshToken);
 
       return {
         accessToken,
         isLoggedIn: true,
-        user: jwtPayload
-      }
+        user: jwtPayload,
+      };
     },
     changePassWord: async (parent: any, args: any, context: MyContext) => {
-
-      const { auth } = context
+      const { auth } = context;
       if (!auth) {
-        throw new GraphQLError('User not verified', {
+        throw new GraphQLError("User not verified", {
           extensions: {
-            code: ErrorCode.NOT_AUTHENTICATED
-          }
-        })
+            code: ErrorCode.NOT_AUTHENTICATED,
+          },
+        });
       }
 
-      const { id, currentPassword, newPassword } = args.input
+      const { id, currentPassword, newPassword } = args.input;
 
       const validateSchema: ValidateSchema<any>[] = [
         {
           value: newPassword,
-          name: 'newPassword',
-          msg: 'Please insert new password in correct format.',
-          type: 'password'
+          name: "newPassword",
+          msg: "Please insert new password in correct format.",
+          type: "password",
         },
-      ]
-      const errors: FormError = validateForm(validateSchema)
+      ];
+      const errors: FormError = validateForm(validateSchema);
       if (Object.keys(errors).length > 0) {
-        throw new GraphQLError('Validation error', {
+        throw new GraphQLError("Validation error", {
           extensions: {
             code: ErrorCode.VALIDATION_ERROR,
-            extras: errors
-          }
-        })
+            extras: errors,
+          },
+        });
       }
 
-      const user = await User.findById(id)
+      const user = await User.findById(id);
 
       if (!user) {
-        throw new GraphQLError('User not found', {
+        throw new GraphQLError("User not found", {
           extensions: {
             code: ErrorCode.USER_NOT_FOUND,
-          }
-        })
+          },
+        });
       }
 
-      const isMatched = await bcrypt.compare(currentPassword, user.password as string)
+      const isMatched = await bcrypt.compare(currentPassword, user.password as string);
 
       if (!isMatched) {
-        throw new GraphQLError('Bad Credentials', {
+        throw new GraphQLError("Bad Credentials", {
           extensions: {
             code: ErrorCode.BAD_CREDENTIALS,
-          }
-        })
+          },
+        });
       }
 
-      const salt = bcrypt.genSaltSync(8)
-      const hashedPassword = bcrypt.hashSync(newPassword, salt)
+      const salt = bcrypt.genSaltSync(8);
+      const hashedPassword = bcrypt.hashSync(newPassword, salt);
 
       await User.findByIdAndUpdate(id, {
-        password: hashedPassword
-      })
+        password: hashedPassword,
+      });
 
-      return true
+      return true;
     },
     logOutUser: async (_: any, args: any, context: MyContext) => {
-      const { res, auth } = context
-      const user = await User.findById(auth?.id)
+      const { res, auth } = context;
+      const user = await User.findById(auth?.id);
       if (user) {
-        user.refreshToken = ''
-        await user.save()
+        user.refreshToken = "";
+        await user.save();
       }
-      resetCookies(res)
+      resetCookies(res);
       return {
-        isLoggedIn: false
-      }
+        isLoggedIn: false,
+      };
     },
 
     refreshToken: async (_: any, args: any, context: MyContext) => {
-      const { req, res } = context
-      const refresh_token = req.cookies.refresh_token
+      const { req, res } = context;
+      const refresh_token = req.cookies.refresh_token;
       if (!refresh_token) {
-        throw new GraphQLError('Refresh token missing', {
+        throw new GraphQLError("Refresh token missing", {
           extensions: {
-            code: ErrorCode.JWT_TOKEN_MISSING
-          }
-        })
+            code: ErrorCode.JWT_TOKEN_MISSING,
+          },
+        });
       }
-      const auth = verifyUser(refresh_token, process.env.JWT_REFRESH_TOKEN_SECRET!)
-      const user = await User.findById(auth.id)
+      const auth = verifyUser(refresh_token, process.env.JWT_REFRESH_TOKEN_SECRET!);
+      const user = await User.findById(auth.id);
       if (!user || user.refreshToken !== refresh_token) {
-        resetCookies(res)
-        throw new GraphQLError('Token Revoked', {
+        resetCookies(res);
+        throw new GraphQLError("Token Revoked", {
           extensions: {
-            code: ErrorCode.TOKEN_REVOKED
-          }
-        })
+            code: ErrorCode.TOKEN_REVOKED,
+          },
+        });
       }
 
       const payload: CustomJwtPayload = {
         role: user.role as UserRole,
-        id: user.id
-      }
-      const { accessToken, refreshToken } = createJwtTokens(payload)
-      user.refreshToken = refreshToken
-      await user.save()
-      setCookies(res, refreshToken)
+        id: user.id,
+      };
+      const { accessToken, refreshToken } = createJwtTokens(payload);
+      user.refreshToken = refreshToken;
+      await user.save();
+      setCookies(res, refreshToken);
       return {
         accessToken,
         isLoggedIn: true,
-        user: payload
-      }
-
-    }
+        user: payload,
+      };
+    },
   },
   Query: {
     getAuthStatus: async (_: any, args: any, context: MyContext) => {
-
-      const { auth } = context
-      if (!auth) throw new GraphQLError('User not authenticated', {
-        extensions: {
-          code: ErrorCode.NOT_AUTHENTICATED
-        }
-      })
+      const { auth } = context;
+      if (!auth)
+        throw new GraphQLError("User not authenticated", {
+          extensions: {
+            code: ErrorCode.NOT_AUTHENTICATED,
+          },
+        });
       return {
         isLoggedIn: true,
-        user: auth
-      }
-    }
+        user: auth,
+      };
+    },
   },
 };
 
-export default authResolver
+export default authResolver;

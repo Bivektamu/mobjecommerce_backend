@@ -1,0 +1,9 @@
+node_modules
+dist
+.husky
+package-lock.json
+docs/**
+**/AGENTS.md
+CLAUDE.md
+README.md
+.aider*

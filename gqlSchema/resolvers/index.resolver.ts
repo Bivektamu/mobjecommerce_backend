@@ -1,50 +1,47 @@
-
-import { GraphQLUpload } from 'graphql-upload-ts'
+import { GraphQLUpload } from "graphql-upload-ts";
 import adminRresolver from "./auth.resolver";
 import userRresolver from "./user.resolver";
-import productResolver from './product.resolver';
-import verifyUser from '../../utilities/verifyUser';
-import orderResolver from './order.resolver';
-import wishListResolver from './wishList.resolver';
-import reviewResolver from './review.resolver';
-import { GraphQLScalarType, Kind } from "graphql"
-import analyticsResolver from './analytics.resolver';
-import paymentResolvers from './payment.resolver';
-
+import productResolver from "./product.resolver";
+import verifyUser from "../../utilities/verifyUser";
+import orderResolver from "./order.resolver";
+import wishListResolver from "./wishList.resolver";
+import reviewResolver from "./review.resolver";
+import { GraphQLScalarType, Kind } from "graphql";
+import analyticsResolver from "./analytics.resolver";
+import paymentResolvers from "./payment.resolver";
 
 const DateScalar = new GraphQLScalarType({
-    name: 'Date',
-    description: 'Date custom scalar type',
-    serialize(value: any) {
-        // Convert outgoing Date to ISO string
-        return value.toISOString();
-    },
-    parseValue(value: any) {
-        // Convert incoming ISO string to Date
-        return new Date(value);
-    },
-    parseLiteral(ast) {
-        if (ast.kind === Kind.STRING) {
-            return new Date(ast.value); // Convert hard-coded string to Date
-        }
-        return null;
-    },
+  name: "Date",
+  description: "Date custom scalar type",
+  serialize(value: any) {
+    // Convert outgoing Date to ISO string
+    return value.toISOString();
+  },
+  parseValue(value: any) {
+    // Convert incoming ISO string to Date
+    return new Date(value);
+  },
+  parseLiteral(ast) {
+    if (ast.kind === Kind.STRING) {
+      return new Date(ast.value); // Convert hard-coded string to Date
+    }
+    return null;
+  },
 });
 
-
 const globalResolver = {
-    Upload: GraphQLUpload,
-    Date: DateScalar,
-}
+  Upload: GraphQLUpload,
+  Date: DateScalar,
+};
 
 export default [
-    globalResolver,
-    userRresolver,
-    adminRresolver,
-    productResolver,
-    orderResolver,
-    wishListResolver,
-    reviewResolver,
-    analyticsResolver,
-    paymentResolvers
-]
+  globalResolver,
+  userRresolver,
+  adminRresolver,
+  productResolver,
+  orderResolver,
+  wishListResolver,
+  reviewResolver,
+  analyticsResolver,
+  paymentResolvers,
+];

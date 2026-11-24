@@ -9,13 +9,13 @@ import analyticsTypeDef from "./analytics.typeDef";
 import paymentTypeDef from "./payment.typeDef";
 
 export default [
-    globalTypeDef,
-    authTypeDef,
-    userTypeDef,
-    productTypeDef,
-    reviewTypeDef,
-    orderTypeDef,
-    wishListTypeDef,
-    analyticsTypeDef,
-    paymentTypeDef
-]
+  globalTypeDef,
+  authTypeDef,
+  userTypeDef,
+  productTypeDef,
+  reviewTypeDef,
+  orderTypeDef,
+  wishListTypeDef,
+  analyticsTypeDef,
+  paymentTypeDef,
+];

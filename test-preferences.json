@@ -1,0 +1,4 @@
+{
+  "gate": "typecheck+verify",
+  "packageManager": "npm"
+}
